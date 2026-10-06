@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Btn } from "./Ui";
 
-const fmt = (n: number) => "€" + Math.round(n).toLocaleString("en-GB");
+const fmt = (n: number) => "£" + Math.round(n).toLocaleString("en-GB");
 
 function Slider({ label, value, display, min, max, step, onChange }: { label: string; value: number; display: string; min: number; max: number; step: number; onChange: (v: number) => void }) {
   return (
