@@ -4,7 +4,7 @@ import { tiers, faqs } from "@/lib/content";
 import { PageHero, Btn, Split, Arrow } from "@/components/Ui";
 import Faq from "@/components/Faq";
 
-export const metadata: Metadata = { title: "Pricing", description: "Essential Automation from £1,500, Connected Automation + AI from £4,500, Custom Systems from £10,000." };
+export const metadata: Metadata = { title: "Pricing", description: "Essential Automation from €1,500, Connected Automation + AI from €4,500, Custom Systems from €10,000." };
 
 export default function Pricing() {
   const priceFaqs = faqs.filter((f) => /cost|long|after launch|custom/i.test(f.q));

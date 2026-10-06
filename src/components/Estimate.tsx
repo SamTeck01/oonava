@@ -17,9 +17,9 @@ type Answers = Record<string, string[]>;
 function recommend(a: Answers) {
   const n = (a.area?.length ?? 0) + (a.tools?.includes("Custom software") ? 2 : 0) + (a.area?.includes("Something custom") ? 2 : 0);
   const big = a.time?.[0] === "40+ hours" || a.people?.[0] === "10+";
-  if (n >= 5 || (big && n >= 3)) return { tier: "Custom Systems", price: "from £10,000 setup · from £999/month", why: "Several connected processes and custom software usually need a purpose-built system." };
-  if (n >= 2) return { tier: "Connected Automation + AI", price: "£4,500 setup · £499/month", why: "Your processes connect to each other, so automating them end to end gives the biggest return." };
-  return { tier: "Essential Automation", price: "£1,500 setup · £199/month", why: "One focused workflow, done properly, is the fastest win." };
+  if (n >= 5 || (big && n >= 3)) return { tier: "Custom Systems", price: "from €10,000 setup · from €999/month", why: "Several connected processes and custom software usually need a purpose-built system." };
+  if (n >= 2) return { tier: "Connected Automation + AI", price: "€4,500 setup · €499/month", why: "Your processes connect to each other, so automating them end to end gives the biggest return." };
+  return { tier: "Essential Automation", price: "€1,500 setup · €199/month", why: "One focused workflow, done properly, is the fastest win." };
 }
 
 export default function Estimate() {

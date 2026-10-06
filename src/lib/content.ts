@@ -119,8 +119,8 @@ export const tiers = [
   {
     name: "Essential Automation",
     level: "Basic",
-    setup: "£1,500",
-    monthly: "£199",
+    setup: "€1,500",
+    monthly: "€199",
     from: false,
     lead: "Remove one repetitive bottleneck.",
     for: "For businesses with one painful process.",
@@ -130,8 +130,8 @@ export const tiers = [
   {
     name: "Connected Automation + AI",
     level: "Standard",
-    setup: "£4,500",
-    monthly: "£499",
+    setup: "€4,500",
+    monthly: "€499",
     from: false,
     featured: true,
     lead: "Connect the workflow from end to end.",
@@ -142,8 +142,8 @@ export const tiers = [
   {
     name: "Custom Systems",
     level: "Premium",
-    setup: "£10,000",
-    monthly: "£999",
+    setup: "€10,000",
+    monthly: "€999",
     from: true,
     lead: "Build the system your business actually needs.",
     for: "When off-the-shelf tools aren't enough.",
@@ -235,7 +235,7 @@ export const faqs: Faq[] = [
   { q: "Can a human take over?", a: "Yes, at any time. When your team steps into a conversation, the automation pauses for that contact." },
   { q: "How do you handle our customer data?", a: "We follow UK GDPR principles: data minimisation, least-privilege access, your accounts, agreed retention and full documentation. We're happy to sign an NDA and a data processing agreement." },
   { q: "How long does implementation take?", a: "Essential Automation is usually live in 1–2 weeks. Connected Automation + AI takes 3–6 weeks. Custom Systems are scoped and timed per project." },
-  { q: "How much does it cost?", a: "Essential Automation is £1,500 setup + £199/month. Connected Automation + AI is £4,500 + £499/month. Custom Systems start from £10,000 + £999/month. You get a fixed price after the mapping call." },
+  { q: "How much does it cost?", a: "Essential Automation is €1,500 setup + €199/month. Connected Automation + AI is €4,500 + €499/month. Custom Systems start from €10,000 + €999/month. You get a fixed price after the mapping call." },
   { q: "What happens after launch?", a: "Your monthly plan covers monitoring, alerts, fixes and small improvements, so the system keeps working as your tools change." },
   { q: "Can you build something custom?", a: "Yes. That's what our Build service is for: dashboards, portals, APIs and AI systems for when existing tools aren't enough." },
 ];
