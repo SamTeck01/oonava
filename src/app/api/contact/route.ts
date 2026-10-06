@@ -1,32 +1,31 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
+import { handleEnquiry } from "@/lib/automation/pipeline";
 
-// Sends the enquiry via Resend when RESEND_API_KEY + CONTACT_TO are set; otherwise logs it.
+// Best-effort per-instance rate limit: 5 submissions per IP per 10 minutes.
+const hits = new Map<string, number[]>();
+function limited(ip: string) {
+  const now = Date.now();
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < 600_000);
+  recent.push(now);
+  hits.set(ip, recent);
+  return recent.length > 5;
+}
+
 export async function POST(req: Request) {
-  let body: Record<string, string>;
+  let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Bad request" }, { status: 400 }); }
 
   if (body.website) return NextResponse.json({ ok: true }); // honeypot
-  const name = String(body.name ?? "").slice(0, 200).trim();
-  const email = String(body.email ?? "").slice(0, 200).trim();
-  if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return NextResponse.json({ error: "Name and a valid email are required" }, { status: 422 });
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (limited(ip)) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 
-  const text = [
-    `Name: ${name}`, `Email: ${email}`, `Company: ${body.company ?? ""}`, `Phone: ${body.phone ?? ""}`,
-    "", String(body.message ?? "").slice(0, 5000), "", String(body.context ?? "").slice(0, 5000),
-  ].join("\n");
-
-  const key = process.env.RESEND_API_KEY;
-  const to = process.env.CONTACT_TO;
-  if (!key || !to) {
-    console.log("[contact] (email not configured)\n" + text);
-    return NextResponse.json({ ok: true });
+  const str = (k: string, max: number) => String(body[k] ?? "").slice(0, max).trim();
+  const lead = { name: str("name", 120), email: str("email", 200), company: str("company", 200), phone: str("phone", 40), message: str("message", 4000), context: str("context", 4000) };
+  if (!lead.name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lead.email)) {
+    return NextResponse.json({ error: "Name and a valid email are required" }, { status: 422 });
   }
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: process.env.CONTACT_FROM ?? "Oonava <onboarding@resend.dev>", to, reply_to: email, subject: `New enquiry: ${name}`, text }),
-  });
-  if (!res.ok) return NextResponse.json({ error: "Could not send" }, { status: 502 });
+  // Respond instantly; the automation runs after the response is sent.
+  after(() => handleEnquiry(lead, lead.context.startsWith("Estimate") ? "Estimate tool" : "Contact form").catch((e) => console.error("[enquiry]", e)));
   return NextResponse.json({ ok: true });
 }

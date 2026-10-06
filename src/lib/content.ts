@@ -2,8 +2,8 @@
 
 export const site = {
   name: "Oonava",
-  email: "hello@oonava.com", // TODO: replace when the company inbox is live
-  calendlyUrl: "", // TODO: set once Calendly is connected; contact page falls back to the form
+  email: "hello@oonava.com",
+  calendlyUrl: process.env.NEXT_PUBLIC_CALENDLY_URL ?? "", // set in Vercel; contact page falls back to the form
   tagline: "Automate. Integrate. Build.",
 };
 
