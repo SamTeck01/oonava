@@ -45,7 +45,7 @@ export default function Pricing() {
             <p className="h3">Not sure what you need?</p>
             <p className="mt-2 text-muted">Answer five quick questions and we&apos;ll point you to the right package.</p>
           </div>
-          <Btn href="/estimate">Estimate your automation</Btn>
+          <Btn href="/estimate">Estimate project</Btn>
         </div>
       </section>
 

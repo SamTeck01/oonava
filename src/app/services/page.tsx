@@ -27,7 +27,7 @@ export default function Services() {
           </Link>
         ))}
         <div className="reveal mt-12 flex flex-wrap gap-3 border-t border-line pt-12">
-          <Btn href="/estimate">Estimate your automation</Btn>
+          <Btn href="/estimate">Estimate project</Btn>
           <Btn href="/pricing" variant="line">See pricing</Btn>
         </div>
       </section>

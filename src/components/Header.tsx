@@ -81,7 +81,7 @@ export default function Header() {
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Link href="/estimate" className="btn btn-dark hidden min-h-11 sm:inline-flex">Estimate automation</Link>
+            <Link href="/estimate" className="btn btn-dark hidden min-h-11 sm:inline-flex">Estimate project</Link>
             <button
               className="grid h-11 w-11 place-items-center lg:hidden"
               aria-label={open ? "Close menu" : "Open menu"}
@@ -110,7 +110,7 @@ export default function Header() {
             ))}
           </div>
           <div className="col-span-4 rounded-[var(--radius)] bg-surface p-7">
-            <p className="eyebrow mb-4">Concept demos</p>
+            <p className="eyebrow mb-4">Our work</p>
             <ul className="space-y-3">
               {demos.map((d) => (
                 <li key={d.slug}>
@@ -133,7 +133,7 @@ export default function Header() {
             </Link>
           ))}
           <Link href="/contact" className="border-b border-line py-4 text-3xl font-semibold tracking-tight">Contact</Link>
-          <Link href="/estimate" className="btn btn-accent mt-8 w-full">Estimate automation <Arrow /></Link>
+          <Link href="/estimate" className="btn btn-accent mt-8 w-full">Estimate project <Arrow /></Link>
           <a href="mailto:hello@oonava.com" className="mt-6 text-muted">hello@oonava.com</a>
         </nav>
       </div>

@@ -5,8 +5,8 @@ import { Btn } from "./Ui";
 export default function Footer() {
   const cols = [
     { title: "Services", links: services.map((s) => ({ href: `/services/${s.slug}`, label: `${s.title}: ${s.short}` })) },
-    { title: "Solutions", links: [{ href: "/solutions/real-estate", label: "Real estate" }, { href: "/estimate", label: "Estimate your automation" }, { href: "/pricing", label: "Pricing" }] },
-    { title: "Concept demos", links: demos.map((d) => ({ href: `/work/${d.slug}`, label: d.name })) },
+    { title: "Solutions", links: [{ href: "/solutions/real-estate", label: "Real estate" }, { href: "/estimate", label: "Estimate project" }, { href: "/pricing", label: "Pricing" }] },
+    { title: "Work", links: demos.map((d) => ({ href: `/work/${d.slug}`, label: d.name })) },
     { title: "Company", links: [{ href: "/about", label: "About" }, { href: "/how-we-work", label: "How we work" }, { href: "/contact", label: "Contact" }] },
   ];
   return (
@@ -17,7 +17,7 @@ export default function Footer() {
           <h2 className="reveal text-[clamp(3rem,10vw,8rem)] font-semibold leading-[.95] tracking-[-0.04em]">Get in touch</h2>
           <div className="reveal flex flex-wrap gap-3">
             <Btn href="/contact">Book a consultation</Btn>
-            <Btn href="/estimate" variant="line">Estimate automation</Btn>
+            <Btn href="/estimate" variant="line">Estimate project</Btn>
           </div>
         </div>
 

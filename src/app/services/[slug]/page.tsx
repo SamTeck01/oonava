@@ -26,7 +26,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
       <PageHero eyebrow={`${s.num} · ${s.short}`} title={[s.title + "."]} lead={s.pitch}>
         <div className="reveal mt-10 flex flex-wrap gap-3" style={{ ["--d" as string]: ".3s" }}>
           <Btn href="/contact">Book a consultation</Btn>
-          <Btn href="/estimate" variant="line">Estimate your automation</Btn>
+          <Btn href="/estimate" variant="line">Estimate project</Btn>
         </div>
       </PageHero>
 

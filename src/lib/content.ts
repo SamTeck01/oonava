@@ -31,15 +31,15 @@ export const services: Service[] = [
     short: "AI & workflow automation",
     pitch: "Turn repetitive processes into systems that run themselves.",
     intro:
-      "Every business has work that follows the same steps every time: reply to the enquiry, copy it into the CRM, chase the follow-up, book the meeting. We map that work and hand it to a system that does it in seconds, every time, at any hour.",
+      "Every business has work that follows the same steps every time: approvals, data entry, hand-offs, reminders and reports. We map that work and hand it to a system that does it in seconds, every time, at any hour.",
     items: [
-      { title: "Lead response & qualification", text: "Every enquiry gets a personalised reply in under a minute. AI reads it, extracts budget, location and timeline, and scores the lead." },
-      { title: "Follow-up sequences", text: "Leads who aren't ready yet get useful, timed follow-ups until they reply, then get handed to a person at the right moment." },
-      { title: "Document processing", text: "Contracts, forms, invoices and IDs read automatically. Data extracted, checked and filed where it belongs." },
-      { title: "AI assistants & agents", text: "Assistants trained on your own information that answer questions, draft replies and take actions inside your tools." },
+      { title: "Workflow automation", text: "Repetitive, rule-based work mapped and automated end to end with n8n, Make or custom code: approvals, hand-offs, notifications and data entry." },
+      { title: "AI document processing", text: "Contracts, forms, invoices and IDs read automatically. Data extracted, validated and filed where it belongs." },
+      { title: "AI assistants & agents", text: "Assistants trained on your own knowledge that answer questions, draft replies and take actions inside your tools." },
+      { title: "Inbox & communication automation", text: "Emails, WhatsApp and web enquiries classified, answered and routed to the right person, at any hour." },
     ],
-    examples: ["Portal enquiry → instant reply → CRM", "Missed call → SMS → booking link", "Signed form → contract → onboarding email", "Inbox triage and routing by AI"],
-    outcomes: ["Replies in seconds instead of hours", "No lead forgotten in an inbox", "Hours of admin removed every week", "A clear human hand-off when it matters"],
+    examples: ["Customer enquiries answered and routed by AI", "Signed form → contract → onboarding sequence", "Invoices read and pushed to accounting", "Weekly reports generated and sent automatically"],
+    outcomes: ["Hours of manual work removed every week", "Faster responses to customers", "Fewer errors from copy and paste", "A clear human hand-off where judgement matters"],
     tools: ["OpenAI", "Gemini", "n8n", "Make", "Zapier", "Email & WhatsApp"],
     faqs: [
       { q: "Will the AI say something wrong to my customers?", a: "The AI works inside rules you approve. It answers from your information only, and anything it isn't sure about is passed to a person instead of guessed." },
@@ -169,6 +169,11 @@ export const demos = [
     line: "Turn enquiries into qualified opportunities.",
     problem: "We spend money generating leads, then take hours to respond to them.",
     steps: ["Enquiry received", "AI understands it", "Lead scored: HOT", "CRM updated", "Personalised reply sent", "Viewing offered", "Calendar booked", "Agent notified"],
+    sector: "Real estate",
+    tags: ["AI", "Integrations", "CRM"],
+    challenge: "Enquiries arrive from portals, the website and email at all hours. Each one is read, typed into the CRM and answered by hand, often hours later.",
+    solution: "An AI pipeline that reads every enquiry, extracts requirements, scores intent, updates the CRM, sends a personalised reply and offers real viewing slots.",
+    stack: ["Gemini / OpenAI", "Webhooks", "Airtable / CRM API", "Google Calendar", "Email & WhatsApp"],
   },
   {
     slug: "follow-up",
@@ -178,6 +183,11 @@ export const demos = [
     line: "Keep leads moving without adding another employee.",
     problem: "Leads say “I'll think about it” and nobody follows up properly.",
     steps: ["Reply detected: not ready", "Status: nurturing", "Day 2: useful follow-up", "Day 5: new listings", "Day 10: check-in", "Lead replies", "Upgraded WARM → HOT", "Agent notified"],
+    sector: "Sales operations",
+    tags: ["AI", "Automation", "Dashboard"],
+    challenge: "Most prospects aren't ready on day one. Without a system, follow-up depends on someone remembering, and warm leads go cold.",
+    solution: "A follow-up engine that reads conversation state, runs timed sequences, stops the moment a person replies and alerts the team when someone is ready.",
+    stack: ["AI classification", "n8n", "CRM API", "Email sequences", "Pipeline dashboard"],
   },
   {
     slug: "operate",
@@ -187,13 +197,26 @@ export const demos = [
     line: "Connect the work happening behind the scenes.",
     problem: "Every booking creates ten small admin tasks for your team.",
     steps: ["Viewing booked", "CRM opportunity updated", "Calendar event created", "Confirmation emailed", "Reminder via WhatsApp", "Agent briefing sent", "Outcome recorded", "Next workflow triggered"],
+    sector: "Operations",
+    tags: ["Integrations", "Custom backend", "Database"],
+    challenge: "Every booking triggers a chain of admin across five systems: CRM, calendar, email, messaging and spreadsheets.",
+    solution: "One event-driven backend that connects every system, so a single booking updates everything, briefs the team and triggers the next step.",
+    stack: ["Node.js / TypeScript", "PostgreSQL", "Webhooks & queues", "Calendar & CRM APIs", "WhatsApp Business API"],
   },
 ];
 
 export const industries = [
-  { title: "Real Estate", text: "Turn property enquiries into viewings, and viewings into offers.", href: "/solutions/real-estate", live: true },
-  { title: "Professional Services", text: "Automate the work between first enquiry and delivered work.", href: "/contact", live: false },
-  { title: "Growing Businesses", text: "Replace disconnected tools and spreadsheets with connected systems.", href: "/contact", live: false },
+  { title: "Real Estate", text: "Enquiry handling, viewings, CRM and landlord operations.", href: "/solutions/real-estate", live: true },
+  { title: "Professional Services", text: "Client intake, documents, scheduling and billing workflows.", href: "/contact", live: false },
+  { title: "E-commerce & Retail", text: "Orders, customer service, inventory and supplier data.", href: "/contact", live: false },
+  { title: "Growing Businesses", text: "Internal tools and connected systems that replace spreadsheets.", href: "/contact", live: false },
+];
+
+export const tech = [
+  { group: "AI", items: ["OpenAI", "Gemini", "Claude", "RAG", "Vector databases", "AI agents"] },
+  { group: "Automation", items: ["n8n", "Make", "Zapier", "Webhooks"] },
+  { group: "Development", items: ["TypeScript", "Node.js", "Next.js", "React", "PostgreSQL", "Supabase", "MongoDB"] },
+  { group: "Integrations", items: ["HubSpot", "Pipedrive", "Salesforce", "Airtable", "Google Workspace", "Microsoft 365", "WhatsApp API", "Stripe"] },
 ];
 
 export const toolNames = ["HubSpot", "Pipedrive", "Salesforce", "Zoho", "Google Workspace", "Microsoft 365", "Outlook", "Gmail", "WhatsApp", "Calendly", "Airtable", "Notion", "Rightmove", "Zoopla", "Slack", "Stripe"];
