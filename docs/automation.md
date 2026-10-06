@@ -50,7 +50,7 @@ Set these in Vercel → Project → Settings → Environment Variables (see `.en
 | `GEMINI_API_KEY` | Google AI Studio |
 | `RESEND_API_KEY` | resend.com → add and verify the domain `oonava.com` (DNS records), then create an API key |
 | `AIRTABLE_TOKEN`, `AIRTABLE_BASE_ID` | From Delight |
-| `WHATSAPP_ALERT_PHONE`, `CALLMEBOT_API_KEY` | Follow the WhatsApp setup at callmebot.com (save their number, send the activation message, and it replies with your API key). Each team member who wants alerts does this once (one number per deploy for now). |
+| `WHATSAPP_ALERTS` | Each person who wants alerts follows the WhatsApp setup at callmebot.com on their own phone and gets their own API key. Add everyone as `phone:apikey` pairs separated by commas, e.g. `+447700900123:123456,+2348012345678:654321`. CallMeBot can't post to WhatsApp groups. |
 | `NEXT_PUBLIC_CALENDLY_URL` | Your Calendly event link |
 | `AUTOMATION_SECRET`, `CRON_SECRET` | Any long random strings (e.g. `openssl rand -hex 32`) |
 | `CALENDLY_WEBHOOK_SIGNING_KEY` | Calendly webhook subscription (needs a paid Calendly plan); point it to `https://oonava.com/api/webhooks/calendly` for `invitee.created` |
