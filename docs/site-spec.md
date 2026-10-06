@@ -83,6 +83,6 @@ No testimonials or case numbers until they're real.
 Next.js (App Router) + TypeScript + Tailwind v4, deployed on Vercel. Content for services and pricing lives in typed data files, so a new service page means new data, not new code.
 
 ## 6. Open items
-- **Tier prices:** not present in anything pasted so far. Needed for /pricing.
+- Tier prices: done (€1,500/€199 · €4,500/€499 · from €10,000/from €999).
 - Logo, brand colour, team photos and bios (Kelly).
 - Domain and booking tool (Calendly or Cal.com?).

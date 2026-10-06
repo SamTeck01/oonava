@@ -1,0 +1,152 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Design tokens — rebrand here. */
+:root {
+  --bg: #ffffff;
+  --fg: #03030f;
+  --muted: #6b7075;
+  --line: #e4e4e7;
+  --surface: #f3f3f3;
+  --surface-2: #e9eaec;
+  --accent: #26a0f8;
+  --accent-strong: #0b6fc0; /* accent fills behind white text (WCAG AA) */
+  --card-grad: linear-gradient(135deg, #f7f7f8 0%, #eceef0 100%);
+  --ease: cubic-bezier(.37, 0, .63, 1);
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --radius: 24px;
+  --container: 1320px;
+}
+:root[data-theme="dark"] {
+  --bg: #03030f;
+  --fg: #f5f5f7;
+  --muted: #9a9fa5;
+  --line: #22222e;
+  --surface: #12121e;
+  --surface-2: #1b1b28;
+  --card-grad: linear-gradient(135deg, #15151f 0%, #1d1d2a 100%);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --font-sans: var(--font-urbanist), ui-sans-serif, system-ui, sans-serif;
+  --radius-card: var(--radius);
+}
+
+html { background: var(--bg); color: var(--fg); -webkit-text-size-adjust: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 1rem; line-height: 1.55; font-weight: 500; overflow-x: hidden; transition: background-color .4s var(--ease), color .4s var(--ease); }
+::selection { background: var(--accent); color: #fff; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+@layer components {
+.container-x { width: 100%; max-width: var(--container); margin-inline: auto; padding-inline: 16px; }
+@media (min-width: 768px) { .container-x { padding-inline: 40px; } }
+@media (min-width: 1280px) { .container-x { padding-inline: 60px; } }
+
+/* Type scale (Ronas-like, fluid) */
+.h1 { font-size: clamp(2.6rem, 7.2vw, 5.25rem); line-height: 1.02; letter-spacing: -0.035em; font-weight: 600; }
+.h2 { font-size: clamp(2rem, 4.4vw, 3.25rem); line-height: 1.08; letter-spacing: -0.025em; font-weight: 600; }
+.h3 { font-size: clamp(1.5rem, 2.6vw, 2.25rem); line-height: 1.15; letter-spacing: -0.02em; font-weight: 600; }
+.h4 { font-size: clamp(1.25rem, 1.8vw, 1.5rem); line-height: 1.25; letter-spacing: -0.01em; font-weight: 600; }
+.lead { font-size: clamp(1.125rem, 1.6vw, 1.375rem); line-height: 1.45; }
+.eyebrow { font-size: .875rem; color: var(--muted); letter-spacing: .01em; }
+
+.section { padding-block: clamp(72px, 11vw, 160px); }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .6rem; min-height: 48px; padding: 0 1.6rem; border-radius: 999px; font-weight: 600; font-size: .95rem; transition: transform .4s var(--ease-out), background-color .3s, color .3s, border-color .3s; will-change: auto; white-space: nowrap; }
+.btn:active { transform: scale(.97); }
+.btn-dark { background: var(--fg); color: var(--bg); }
+.btn-dark:hover { background: var(--accent-strong); color: #fff; }
+.btn-accent { background: var(--accent-strong); color: #fff; }
+.btn-accent:hover { background: var(--fg); color: var(--bg); }
+.btn-line { border: 1px solid var(--line); }
+.btn-line:hover { border-color: var(--fg); }
+.btn .arrow { transition: transform .4s var(--ease-out); }
+.btn:hover .arrow { transform: translateX(4px); }
+
+/* "View more" link with circle, like Ronas */
+.more { display: inline-flex; align-items: center; gap: .9rem; font-weight: 600; font-size: .95rem; }
+.more .dot { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; transition: background-color .35s var(--ease), border-color .35s, transform .5s var(--ease-out); }
+.more:hover .dot { background: var(--accent-strong); border-color: var(--accent-strong); color: #fff; transform: rotate(-45deg); }
+
+/* Cards */
+.card { background: var(--card-grad); border-radius: var(--radius); transition: transform .5s var(--ease-out); }
+@media (hover: hover) { .card-hover:hover { transform: translateY(-6px); } }
+
+/* Reveal on scroll (transform/opacity only) */
+.reveal { opacity: 0; transform: translate3d(0, 28px, 0); transition: opacity .9s var(--ease-out), transform .9s var(--ease-out); transition-delay: var(--d, 0s); }
+.reveal.is-in { opacity: 1; transform: none; }
+.line-mask { display: block; overflow: hidden; padding-bottom: .08em; }
+.line-mask > span { display: block; transform: translate3d(0, 105%, 0); transition: transform 1.1s var(--ease-out); transition-delay: var(--d, 0s); }
+.is-in .line-mask > span, .line-mask.is-in > span { transform: none; }
+.no-js .reveal { opacity: 1; transform: none; }
+
+/* Hand-drawn underline */
+.squiggle { position: relative; white-space: nowrap; }
+.squiggle svg { position: absolute; left: 0; right: 0; bottom: -.12em; width: 100%; height: .28em; overflow: visible; }
+.squiggle path { fill: none; stroke: var(--accent); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 420; stroke-dashoffset: 420; transition: stroke-dashoffset 1.4s var(--ease-out) .9s; }
+.is-in .squiggle path { stroke-dashoffset: 0; }
+
+/* Rotating badge */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 18s linear infinite; }
+
+/* Flow diagram */
+@keyframes travel { 0% { offset-distance: 0%; opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } 100% { offset-distance: 100%; opacity: 0; } }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+.flow-node.active { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.flow-node { transition: background-color .35s var(--ease), color .35s var(--ease), border-color .35s; }
+
+/* FAQ */
+.faq summary { list-style: none; cursor: pointer; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq .dash { transition: transform .4s var(--ease-out); }
+.faq details[open] .dash { transform: rotate(180deg); }
+.faq .ans { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s var(--ease-out); }
+.faq details[open] .ans { grid-template-rows: 1fr; }
+
+/* Marquee */
+@keyframes marquee { to { transform: translateX(-50%); } }
+.marquee { display: flex; width: max-content; animation: marquee 40s linear infinite; }
+.marquee:hover { animation-play-state: paused; }
+
+/* Range input */
+input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 4px; background: var(--line); outline-offset: 6px; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); border: 4px solid var(--bg); box-shadow: 0 0 0 1px var(--accent); cursor: pointer; }
+input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); border: 4px solid var(--bg); cursor: pointer; }
+
+.field { width: 100%; min-height: 52px; padding: 14px 0; background: transparent; border: 0; border-bottom: 1px solid var(--line); font-size: 1.05rem; transition: border-color .3s; border-radius: 0; }
+.field:focus { outline: none; border-color: var(--accent); }
+.field::placeholder { color: var(--muted); }
+
+.chip { display: inline-flex; align-items: center; min-height: 44px; padding: 0 1.1rem; border-radius: 999px; border: 1px solid var(--line); font-weight: 500; transition: background-color .3s, color .3s, border-color .3s; cursor: pointer; user-select: none; }
+.chip:hover { border-color: var(--fg); }
+.chip[aria-pressed="true"], .chip.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+}
+
+/* Above-the-fold heroes animate with CSS on load, so they never wait for JS */
+@keyframes rise { from { opacity: .01; transform: translate3d(0, 28px, 0); } to { opacity: 1; transform: none; } }
+@keyframes lineUp { from { transform: translate3d(0, 105%, 0); } to { transform: none; } }
+.hero .reveal { opacity: 1; transform: none; animation: rise .9s var(--ease-out) var(--d, 0s) both; }
+.hero .line-mask > span { transform: none; animation: lineUp 1.1s var(--ease-out) var(--d, 0s) both; }
+.hero .squiggle path { animation: draw 1.4s var(--ease-out) .9s both; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; transition-delay: 0s !important; }
+  .reveal, .line-mask > span { opacity: 1; transform: none; }
+  .marquee, .spin { animation: none; }
+}
+
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
