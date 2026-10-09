@@ -36,7 +36,7 @@ export default function Footer() {
 
         <div className="mt-20 grid gap-8 border-t border-line pt-10 md:grid-cols-3">
           <div><p className="eyebrow mb-2">Write</p><a href={`mailto:${site.email}`} className="text-lg font-semibold hover:text-accent">{site.email}</a></div>
-          <div><p className="eyebrow mb-2">Based in</p><p className="text-lg font-semibold">United Kingdom · Remote across Europe</p></div>
+          <div><p className="eyebrow mb-2">Clients</p><p className="text-lg font-semibold">UK &amp; Europe</p></div>
           <div><p className="eyebrow mb-2">Approach</p><p className="text-lg font-semibold">{site.tagline}</p></div>
         </div>
 

@@ -8,13 +8,13 @@ import Faq from "@/components/Faq";
 
 export const metadata: Metadata = {
   title: "AI automation for real estate agencies",
-  description: "Reply to every property enquiry in under 60 seconds, follow up automatically and book more viewings, inside the tools you already use.",
+  description: "Reply to every property enquiry in seconds, follow up automatically and book more viewings, inside the tools you already use.",
 };
 
 export default function RealEstate() {
   return (
     <>
-      <PageHero eyebrow="Solutions · Real estate" title={["Reply to every lead", "in under 60 seconds.", "Day and night."]} lead="Most buyers go with the agent who responds first. Oonava answers, qualifies and books viewings for you, then hands the lead to your agent at the right moment.">
+      <PageHero eyebrow="Solutions · Real estate" title={["Reply to every lead", "in seconds.", "Day and night."]} lead="Most buyers go with the agent who responds first. Oonava answers, qualifies and books viewings for you, then hands the lead to your agent at the right moment.">
         <div className="reveal mt-10 flex flex-wrap gap-3" style={{ ["--d" as string]: ".3s" }}>
           <Btn href="/contact" variant="accent">Book a free consultation</Btn>
           <Btn href="/work/capture" variant="line">See how it works</Btn>

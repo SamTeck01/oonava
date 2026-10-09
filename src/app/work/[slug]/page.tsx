@@ -42,7 +42,7 @@ export default async function Case({ params }: { params: Promise<{ slug: string 
 
       <Split num="01" title="The challenge" className="border-b border-line">
         <p className="h3 reveal">{d.challenge}</p>
-        <p className="reveal mt-6 text-muted">In the client&apos;s words: “{d.problem}”</p>
+        <p className="reveal mt-6 text-muted">Example business challenge: “{d.problem}”</p>
       </Split>
 
       <Split num="02" title="The solution" className="border-b border-line">

@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   title: { default: "Oonava: AI automation, integrations & custom systems", template: "%s · Oonava" },
   description: "Oonava helps businesses remove repetitive work, connect disconnected tools and build the software they need. Automate. Integrate. Build.",
   openGraph: { siteName: "Oonava", type: "website", locale: "en_GB" },
+  alternates: { canonical: "./" },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

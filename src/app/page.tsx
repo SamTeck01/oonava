@@ -33,7 +33,7 @@ export default function Home() {
           </h1>
           <div className="lg:col-span-4 lg:pb-3">
             <p className="lead reveal text-muted" style={{ ["--d" as string]: ".35s" }}>
-              Oonava is an AI automation agency. We design, build and maintain automation, integrations and custom software for growing businesses.
+              We help growing businesses respond faster, follow up consistently and reduce manual admin through AI automation and connected business systems.
             </p>
             <div className="reveal mt-8 flex flex-wrap gap-3" style={{ ["--d" as string]: ".45s" }}>
               <Btn href="/estimate">Estimate project</Btn>

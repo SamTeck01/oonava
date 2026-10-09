@@ -45,7 +45,14 @@ export default function Calculator() {
           <p className="mt-2 text-[clamp(2.25rem,6vw,4rem)] font-semibold leading-none tracking-tight text-accent tabular-nums">{fmt(revenue)}</p>
         </div>
         <div className="mt-10">
-          <p className="mb-6 text-sm opacity-60">Illustrative estimate based on simple assumptions, not a guarantee. We&apos;ll work through your real numbers on a call.</p>
+          <p className="text-sm opacity-60">Illustrative estimate, not a guarantee. We&apos;ll work through your real numbers on a call.</p>
+          <details className="mb-6 mt-2 text-sm opacity-70">
+            <summary className="cursor-pointer underline underline-offset-4">How this is calculated</summary>
+            <ul className="mt-3 list-disc space-y-1 pl-5">
+              <li>Hours: your weekly admin hours × 4.3 weeks, assuming about 60% can be automated.</li>
+              <li>Revenue: assumes 1% of enquiries become deals, and that each hour of reply delay loses about 6% of those (capped at 35%). Replying in seconds recovers that share.</li>
+            </ul>
+          </details>
           <Btn href="/estimate" variant="accent">See what your workflow could look like</Btn>
         </div>
       </div>

@@ -124,7 +124,7 @@ export const tiers = [
     from: false,
     lead: "Remove one repetitive bottleneck.",
     for: "For businesses with one painful process.",
-    features: ["One core workflow, end to end", "Connected to your existing tools", "Error handling & alerts", "Documentation & handover", "Monthly monitoring & small changes"],
+    features: ["1 workflow, up to 2 connected tools", "Error handling & alerts", "Documentation & handover", "Monitoring, plus up to 2 hours of changes a month", "Support replies within 2 working days"],
     examples: "Lead routing · Email automation · CRM updates · Appointment booking · Document processing",
   },
   {
@@ -135,8 +135,8 @@ export const tiers = [
     from: false,
     featured: true,
     lead: "Connect the workflow from end to end.",
-    for: "Our most popular package for growing teams.",
-    features: ["Several connected workflows", "AI reading, qualification & replies", "Follow-up sequences", "Booking & human hand-off", "Pipeline dashboard", "Priority monitoring & improvements"],
+    for: "Recommended for growing teams.",
+    features: ["Up to 4 connected workflows", "AI reading, qualification & replies", "Follow-up sequences, booking & human hand-off", "Pipeline dashboard", "Monitoring, plus up to 5 hours of changes a month", "Support replies within 1 working day"],
     examples: "Enquiry → AI → CRM → follow-up → booking → agent",
   },
   {
@@ -147,7 +147,7 @@ export const tiers = [
     from: true,
     lead: "Build the system your business actually needs.",
     for: "When off-the-shelf tools aren't enough.",
-    features: ["Custom dashboards & portals", "Custom APIs & integrations", "AI agents & knowledge systems", "Database & system architecture", "Dedicated support & roadmap"],
+    features: ["Custom dashboards & portals", "Custom APIs & integrations", "AI agents & knowledge systems", "Database & system architecture", "Scope, monthly hours and support levels agreed per project"],
     examples: "Internal tools · Client portals · AI agents · Bespoke software",
   },
 ];
@@ -236,13 +236,13 @@ export const faqs: Faq[] = [
   { q: "How do you handle our customer data?", a: "We follow UK GDPR principles: data minimisation, least-privilege access, your accounts, agreed retention and full documentation. We're happy to sign an NDA and a data processing agreement." },
   { q: "How long does implementation take?", a: "Essential Automation is usually live in 1–2 weeks. Connected Automation + AI takes 3–6 weeks. Custom Systems are scoped and timed per project." },
   { q: "How much does it cost?", a: "Essential Automation is €1,500 setup + €199/month. Connected Automation + AI is €4,500 + €499/month. Custom Systems start from €10,000 + €999/month. You get a fixed price after the mapping call." },
-  { q: "What happens after launch?", a: "Your monthly plan covers monitoring, alerts, fixes and small improvements, so the system keeps working as your tools change." },
+  { q: "What happens after launch?", a: "Your monthly plan covers monitoring, alerts and fixes, plus a set number of hours for changes each month (2 hours on Essential, 5 on Connected, agreed per project on Custom). Extra work is quoted before we start." },
   { q: "Can you build something custom?", a: "Yes. That's what our Build service is for: dashboards, portals, APIs and AI systems for when existing tools aren't enough." },
 ];
 
 export const realEstate = {
   stats: [
-    { value: "< 60s", label: "target reply time, day and night" },
+    { value: "Seconds", label: "typical reply time once connected, day and night" },
     { value: "24/7", label: "every enquiry answered, including weekends" },
     { value: "0", label: "leads forgotten in an inbox" },
   ],

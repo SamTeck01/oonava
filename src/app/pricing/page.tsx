@@ -17,7 +17,7 @@ export default function Pricing() {
             const dark = t.featured;
             return (
               <div key={t.name} className={`reveal relative flex flex-col rounded-[var(--radius)] p-7 md:p-9 ${dark ? "bg-fg text-bg" : "card"}`} style={{ ["--d" as string]: `${i * 0.08}s` }}>
-                {dark && <span className="absolute right-6 top-6 rounded-full bg-accent-strong px-3 py-1 text-xs font-semibold text-white">Most popular</span>}
+                {dark && <span className="absolute right-6 top-6 rounded-full bg-accent-strong px-3 py-1 text-xs font-semibold text-white">Recommended</span>}
                 <p className={`text-sm ${dark ? "opacity-60" : "text-muted"}`}>0{i + 1} · {t.level}</p>
                 <p className="h3 mt-3 pr-24">{t.name}</p>
                 <p className={`mt-3 ${dark ? "opacity-70" : "text-muted"}`}>{t.lead} {t.for}</p>
