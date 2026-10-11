@@ -119,8 +119,8 @@ export const tiers = [
   {
     name: "Essential Automation",
     level: "Basic",
-    setup: "€1,500",
-    monthly: "€199",
+    setup: { eur: 1500, gbp: 1300 },
+    monthly: { eur: 199, gbp: 170 },
     from: false,
     lead: "Remove one repetitive bottleneck.",
     for: "For businesses with one painful process.",
@@ -130,8 +130,8 @@ export const tiers = [
   {
     name: "Connected Automation + AI",
     level: "Standard",
-    setup: "€4,500",
-    monthly: "€499",
+    setup: { eur: 4500, gbp: 3900 },
+    monthly: { eur: 499, gbp: 430 },
     from: false,
     featured: true,
     lead: "Connect the workflow from end to end.",
@@ -142,8 +142,8 @@ export const tiers = [
   {
     name: "Custom Systems",
     level: "Premium",
-    setup: "€10,000",
-    monthly: "€999",
+    setup: { eur: 10000, gbp: 8600 },
+    monthly: { eur: 999, gbp: 860 },
     from: true,
     lead: "Build the system your business actually needs.",
     for: "When off-the-shelf tools aren't enough.",
@@ -235,7 +235,7 @@ export const faqs: Faq[] = [
   { q: "Can a human take over?", a: "Yes, at any time. When your team steps into a conversation, the automation pauses for that contact." },
   { q: "How do you handle our customer data?", a: "We follow UK GDPR principles: data minimisation, least-privilege access, your accounts, agreed retention and full documentation. We're happy to sign an NDA and a data processing agreement." },
   { q: "How long does implementation take?", a: "Essential Automation is usually live in 1–2 weeks. Connected Automation + AI takes 3–6 weeks. Custom Systems are scoped and timed per project." },
-  { q: "How much does it cost?", a: "Essential Automation is €1,500 setup + €199/month. Connected Automation + AI is €4,500 + €499/month. Custom Systems start from €10,000 + €999/month. You get a fixed price after the mapping call." },
+  { q: "How much does it cost?", a: "Essential Automation is €1,500 (£1,300) setup + €199 (£170)/month. Connected Automation + AI is €4,500 (£3,900) + €499 (£430)/month. Custom Systems start from €10,000 (£8,600) + €999 (£860)/month. You get a fixed price after the mapping call." },
   { q: "What happens after launch?", a: "Your monthly plan covers monitoring, alerts and fixes, plus a set number of hours for changes each month (2 hours on Essential, 5 on Connected, agreed per project on Custom). Extra work is quoted before we start." },
   { q: "Can you build something custom?", a: "Yes. That's what our Build service is for: dashboards, portals, APIs and AI systems for when existing tools aren't enough." },
 ];

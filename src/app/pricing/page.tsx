@@ -1,10 +1,11 @@
+import { Money, CurrencyToggle } from "@/components/Money";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { tiers, faqs } from "@/lib/content";
 import { PageHero, Btn, Split, Arrow } from "@/components/Ui";
 import Faq from "@/components/Faq";
 
-export const metadata: Metadata = { title: "Pricing", description: "Essential Automation from €1,500, Connected Automation + AI from €4,500, Custom Systems from €10,000." };
+export const metadata: Metadata = { title: "Pricing", description: "Essential Automation from €1,500 (£1,300), Connected Automation + AI from €4,500 (£3,900), Custom Systems from €10,000 (£8,600)." };
 
 export default function Pricing() {
   const priceFaqs = faqs.filter((f) => /cost|long|after launch|custom/i.test(f.q));
@@ -12,6 +13,7 @@ export default function Pricing() {
     <>
       <PageHero eyebrow="Pricing" title={["Clear prices.", "No surprises."]} lead="Choose how much of the workflow you want Oonava to own. Every package has a one-off setup fee and a monthly plan that keeps it monitored, maintained and improving." />
       <section className="container-x pb-20">
+        <CurrencyToggle className="reveal mb-8" />
         <div className="grid gap-4 lg:grid-cols-3">
           {tiers.map((t, i) => {
             const dark = t.featured;
@@ -22,9 +24,9 @@ export default function Pricing() {
                 <p className="h3 mt-3 pr-24">{t.name}</p>
                 <p className={`mt-3 ${dark ? "opacity-70" : "text-muted"}`}>{t.lead} {t.for}</p>
                 <div className="mt-10">
-                  <p className="text-5xl font-semibold tracking-tight">{t.from && <span className="text-lg font-medium">from </span>}{t.setup}</p>
+                  <p className="text-5xl font-semibold tracking-tight">{t.from && <span className="text-lg font-medium">from </span>}<Money price={t.setup} /></p>
                   <p className={`mt-1 ${dark ? "opacity-60" : "text-muted"}`}>one-off setup</p>
-                  <p className="mt-5 text-2xl font-semibold">{t.from && <span className="text-base font-medium">from </span>}{t.monthly}<span className="text-base font-medium">/month</span></p>
+                  <p className="mt-5 text-2xl font-semibold">{t.from && <span className="text-base font-medium">from </span>}<Money price={t.monthly} /><span className="text-base font-medium">/month</span></p>
                   <p className={`mt-1 ${dark ? "opacity-60" : "text-muted"}`}>monitoring, maintenance &amp; improvements</p>
                 </div>
                 <ul className={`mt-10 flex-1 space-y-3 border-t pt-8 ${dark ? "border-white/15" : "border-line"}`}>

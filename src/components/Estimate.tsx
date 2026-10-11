@@ -3,6 +3,8 @@
 import { useState } from "react";
 import ContactForm from "./ContactForm";
 import { Arrow } from "./Ui";
+import { tiers } from "@/lib/content";
+import { useCurrency, format } from "./Money";
 
 const questions = [
   { key: "area", q: "What do you want to automate?", multi: true, options: ["Lead response", "Follow-up", "Booking & calendars", "CRM updates", "Documents & forms", "Reporting", "Internal admin", "Something custom"] },
@@ -17,12 +19,13 @@ type Answers = Record<string, string[]>;
 function recommend(a: Answers) {
   const n = (a.area?.length ?? 0) + (a.tools?.includes("Custom software") ? 2 : 0) + (a.area?.includes("Something custom") ? 2 : 0);
   const big = a.time?.[0] === "40+ hours" || a.people?.[0] === "10+";
-  if (n >= 5 || (big && n >= 3)) return { tier: "Custom Systems", price: "from €10,000 setup · from €999/month", why: "Several connected processes and custom software usually need a purpose-built system." };
-  if (n >= 2) return { tier: "Connected Automation + AI", price: "€4,500 setup · €499/month", why: "Your processes connect to each other, so automating them end to end gives the biggest return." };
-  return { tier: "Essential Automation", price: "€1,500 setup · €199/month", why: "One focused workflow, done properly, is the fastest win." };
+  if (n >= 5 || (big && n >= 3)) return { tier: "Custom Systems", t: tiers[2], why: "Several connected processes and custom software usually need a purpose-built system." };
+  if (n >= 2) return { tier: "Connected Automation + AI", t: tiers[1], why: "Your processes connect to each other, so automating them end to end gives the biggest return." };
+  return { tier: "Essential Automation", t: tiers[0], why: "One focused workflow, done properly, is the fastest win." };
 }
 
 export default function Estimate() {
+  const cur = useCurrency();
   const [step, setStep] = useState(0);
   const [a, setA] = useState<Answers>({});
   const q = questions[step];
@@ -47,7 +50,7 @@ export default function Estimate() {
           <p className="opacity-70">Your workflow looks like a strong candidate for automation.</p>
           <p className="mt-6 text-sm uppercase tracking-widest opacity-60">Likely fit</p>
           <p className="h2 mt-2">{r.tier}</p>
-          <p className="mt-3 text-accent">{r.price}</p>
+          <p className="mt-3 text-accent">{`${r.t.from ? "from " : ""}${format(r.t.setup, cur)} setup · ${r.t.from ? "from " : ""}${format(r.t.monthly, cur)}/month`}</p>
           <p className="mt-6 opacity-80">{r.why}</p>
           <p className="mt-8 text-sm opacity-60">This is a starting point, not a quote. You get a fixed price after a free mapping call.</p>
           <button onClick={() => { setStep(0); setA({}); }} className="mt-8 text-sm underline opacity-80">Start again</button>

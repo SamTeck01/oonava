@@ -1,15 +1,10 @@
+import { Money } from "@/components/Money";
 import Link from "next/link";
-import { pillars, demos, industries, tech, steps, tiers, trust, faqs } from "@/lib/content";
+import { pillars, demos, industries, steps, tiers, trust, faqs } from "@/lib/content";
 import { Btn, More, Split, Arrow } from "@/components/Ui";
 import Showcase from "@/components/Showcase";
 import DemoVisual from "@/components/DemoVisual";
 import Faq from "@/components/Faq";
-
-const needs = [
-  ["Automate the internal processes", "of your business, so your team stops doing work a system can do better."],
-  ["Connect the tools you already use", "so your CRM, inbox, calendar and data finally work as one system."],
-  ["Build custom software and AI", "when off-the-shelf tools can't do what your business needs."],
-];
 
 export default function Home() {
   return (
@@ -55,7 +50,7 @@ export default function Home() {
 
       {/* WHAT WE DO */}
       <section className="section container-x">
-        <p className="eyebrow reveal mb-6">What we do</p>
+        <p className="eyebrow reveal mb-6">About Oonava</p>
         <div className="grid gap-10 md:grid-cols-12">
           <p className="h3 reveal md:col-span-7">Oonava is an AI automation and software agency helping businesses remove repetitive work, connect disconnected systems and build the software they need to operate better.</p>
           <div className="reveal space-y-4 text-muted md:col-span-4 md:col-start-9" style={{ ["--d" as string]: ".1s" }}>
@@ -64,34 +59,28 @@ export default function Home() {
             <More href="/about">About Oonava</More>
           </div>
         </div>
-        <div className="mt-24 grid gap-10 md:grid-cols-12">
-          <p className="h4 reveal md:col-span-4">You may need our services if you want to:</p>
-          <div className="space-y-10 md:col-span-7 md:col-start-6">
-            {needs.map(([a, b], i) => (
-              <div key={a} className="reveal flex gap-6" style={{ ["--d" as string]: `${i * 0.08}s` }}>
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-surface text-sm font-semibold text-accent-strong">0{i + 1}</span>
-                <p className="h3">{a} <span className="text-muted">{b}</span></p>
-              </div>
-            ))}
-          </div>
-        </div>
       </section>
 
-      {/* PILLARS */}
-      {pillars.map((s) => (
-        <Split key={s.slug} num={s.num} title={s.title} className="border-t border-line">
-          <p className="lead reveal max-w-2xl">{s.pitch} <span className="text-muted">{s.intro.split(". ")[0]}.</span></p>
-          <div className="reveal mt-8"><More href={`/services/${s.slug}`} /></div>
-          <div className="mt-14 grid gap-4 sm:grid-cols-2">
-            {s.items.map((it, i) => (
-              <Link key={it.title} href={`/services/${s.slug}`} className="card card-hover reveal flex min-h-[190px] flex-col justify-between p-6 md:min-h-[280px] md:p-8" style={{ ["--d" as string]: `${(i % 2) * 0.08}s` }}>
-                <p className="h4">{it.title}</p>
-                <p className="mt-6 text-[.95rem] text-muted">{it.text}</p>
-              </Link>
-            ))}
-          </div>
-        </Split>
-      ))}
+      {/* SERVICES */}
+      <section className="section container-x border-t border-line">
+        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <h2 className="h2 reveal">What we do</h2>
+          <div className="reveal"><More href="/services">All services</More></div>
+        </div>
+        <div className="mt-14 grid gap-4 lg:grid-cols-3">
+          {pillars.map((s, i) => (
+            <Link key={s.slug} href={`/services/${s.slug}`} className="card card-hover reveal flex flex-col p-7 md:p-9" style={{ ["--d" as string]: `${i * 0.08}s` }}>
+              <p className="eyebrow">{s.num}</p>
+              <p className="h3 mt-2">{s.title}</p>
+              <p className="mt-3 text-muted">{s.pitch}</p>
+              <ul className="mt-8 flex-1 space-y-2 border-t border-line pt-6 text-[.95rem]">
+                {s.items.map((it) => <li key={it.title} className="flex gap-3"><span className="text-accent-strong" aria-hidden>→</span>{it.title}</li>)}
+              </ul>
+              <span className="more mt-8"><span className="dot"><Arrow /></span>Learn more</span>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       {/* SELECTED WORK */}
       <section className="section bg-fg text-bg">
@@ -139,20 +128,6 @@ export default function Home() {
         </div>
       </Split>
 
-      {/* TECHNOLOGIES */}
-      <Split num="Technologies" title="Our stack" className="border-t border-line">
-        <div className="divide-y divide-line border-y border-line">
-          {tech.map((g, i) => (
-            <div key={g.group} className="reveal grid gap-4 py-7 md:grid-cols-12" style={{ ["--d" as string]: `${i * 0.05}s` }}>
-              <p className="font-semibold md:col-span-3">{g.group}</p>
-              <div className="flex flex-wrap gap-2 md:col-span-9">
-                {g.items.map((t) => <span key={t} className="rounded-full bg-surface px-4 py-2 text-[.95rem]">{t}</span>)}
-              </div>
-            </div>
-          ))}
-        </div>
-      </Split>
-
       {/* PROCESS */}
       <section className="section bg-surface">
         <div className="container-x">
@@ -187,8 +162,8 @@ export default function Home() {
               <p className={`text-sm ${t.featured ? "opacity-60" : "text-muted"}`}>0{i + 1} · {t.level}</p>
               <p className="h3 mt-3">{t.name}</p>
               <p className={`mt-3 ${t.featured ? "opacity-70" : "text-muted"}`}>{t.lead}</p>
-              <p className="mt-10 text-4xl font-semibold tracking-tight">{t.from && <span className="text-lg font-medium">from </span>}{t.setup}</p>
-              <p className={`text-sm ${t.featured ? "opacity-60" : "text-muted"}`}>setup, then {t.from ? "from " : ""}{t.monthly}/month</p>
+              <p className="mt-10 text-4xl font-semibold tracking-tight">{t.from && <span className="text-lg font-medium">from </span>}<Money price={t.setup} /></p>
+              <p className={`text-sm ${t.featured ? "opacity-60" : "text-muted"}`}>setup, then {t.from ? "from " : ""}<Money price={t.monthly} />/month</p>
             </div>
           ))}
         </div>
@@ -210,7 +185,8 @@ export default function Home() {
 
       {/* FAQ */}
       <Split num="Questions" title="FAQ">
-        <Faq items={faqs} />
+        <Faq items={faqs.slice(0, 5)} />
+        <div className="reveal mt-10"><More href="/pricing">More questions</More></div>
       </Split>
 
       {/* FINAL CTA */}

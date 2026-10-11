@@ -1,3 +1,4 @@
+import { Money } from "@/components/Money";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { realEstate, demos, tiers } from "@/lib/content";
@@ -77,7 +78,7 @@ export default function RealEstate() {
           {tiers.map((t) => (
             <div key={t.name} className="reveal flex flex-col gap-2 py-6 md:flex-row md:items-center md:justify-between">
               <div><p className="h4">{t.name}</p><p className="text-muted">{t.lead}</p></div>
-              <p className="font-semibold">{t.from ? "from " : ""}{t.setup} <span className="font-normal text-muted">+ {t.from ? "from " : ""}{t.monthly}/mo</span></p>
+              <p className="font-semibold">{t.from ? "from " : ""}<Money price={t.setup} /> <span className="font-normal text-muted">+ {t.from ? "from " : ""}<Money price={t.monthly} />/mo</span></p>
             </div>
           ))}
         </div>
