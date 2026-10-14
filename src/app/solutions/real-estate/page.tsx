@@ -6,6 +6,7 @@ import { PageHero, Btn, Split, More } from "@/components/Ui";
 import Pipeline from "@/components/Pipeline";
 import Calculator from "@/components/Calculator";
 import Faq from "@/components/Faq";
+import LiveDemo from "@/components/LiveDemo";
 
 export const metadata: Metadata = {
   title: "AI automation for real estate agencies",
@@ -18,7 +19,7 @@ export default function RealEstate() {
       <PageHero eyebrow="Solutions · Real estate" title={["Reply to every lead", "in seconds.", "Day and night."]} lead="Most buyers go with the agent who responds first. Oonava answers, qualifies and books viewings for you, then hands the lead to your agent at the right moment.">
         <div className="reveal mt-10 flex flex-wrap gap-3" style={{ ["--d" as string]: ".3s" }}>
           <Btn href="/contact" variant="accent">Book a free consultation</Btn>
-          <Btn href="/work/capture" variant="line">See how it works</Btn>
+          <Btn href="#demo" variant="line">Try the live demo</Btn>
         </div>
       </PageHero>
 
@@ -66,6 +67,12 @@ export default function RealEstate() {
         </div>
         <p className="reveal mt-4 text-sm text-muted">Sample pipeline from a concept demo.</p>
       </Split>
+
+      <section id="demo" className="section container-x border-t border-line">
+        <p className="eyebrow reveal mb-4">Try it yourself</p>
+        <h2 className="h2 reveal mb-12 max-w-3xl">Send an enquiry. Watch what happens.</h2>
+        <div className="reveal"><LiveDemo /></div>
+      </section>
 
       <section className="section container-x border-t border-line">
         <p className="eyebrow reveal mb-4">04 · What slow replies cost</p>

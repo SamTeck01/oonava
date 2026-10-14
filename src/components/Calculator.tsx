@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Btn } from "./Ui";
+import { useCurrency } from "./Money";
 
-const fmt = (n: number) => "€" + Math.round(n).toLocaleString("en-GB");
 
 function Slider({ label, value, display, min, max, step, onChange }: { label: string; value: number; display: string; min: number; max: number; step: number; onChange: (v: number) => void }) {
   return (
@@ -17,7 +17,10 @@ function Slider({ label, value, display, min, max, step, onChange }: { label: st
   );
 }
 
-export default function Calculator() {
+export default function Calculator({ cta = { href: "/estimate", label: "See what your workflow could look like" } }: { cta?: { href: string; label: string } }) {
+  // Values are in the visitor's currency; the slider range is the same number either way.
+  const sym = useCurrency() === "GBP" ? "£" : "€";
+  const fmt = (n: number) => sym + Math.round(n).toLocaleString("en-GB");
   const [leads, setLeads] = useState(250);
   const [deal, setDeal] = useState(8000);
   const [reply, setReply] = useState(2);
@@ -53,7 +56,7 @@ export default function Calculator() {
               <li>Revenue: assumes 1% of enquiries become deals, and that each hour of reply delay loses about 6% of those (capped at 35%). Replying in seconds recovers that share.</li>
             </ul>
           </details>
-          <Btn href="/estimate" variant="accent">See what your workflow could look like</Btn>
+          <Btn href={cta.href} variant="accent">{cta.label}</Btn>
         </div>
       </div>
     </div>

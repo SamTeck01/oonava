@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Arrow } from "./Ui";
+import { track } from "./Analytics";
 
 export default function ContactForm({ context, compact = false }: { context?: string; compact?: boolean }) {
   const [state, setState] = useState<"idle" | "sending" | "ok" | "error">("idle");
@@ -13,6 +14,7 @@ export default function ContactForm({ context, compact = false }: { context?: st
     try {
       const res = await fetch("/api/contact", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...data, context }) });
       setState(res.ok ? "ok" : "error");
+      if (res.ok) track("lead");
     } catch {
       setState("error");
     }

@@ -4,6 +4,8 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Motion from "@/components/Motion";
+import Chrome from "@/components/Chrome";
+import Analytics from "@/components/Analytics";
 
 const urbanist = Urbanist({ subsets: ["latin"], variable: "--font-urbanist", display: "swap" });
 
@@ -31,10 +33,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-fg focus:px-4 focus:py-2 focus:text-bg">Skip to content</a>
-        <Header />
+        <Chrome><Header /></Chrome>
         <main id="main">{children}</main>
-        <Footer />
+        <Chrome><Footer /></Chrome>
         <Motion />
+        <Analytics />
       </body>
     </html>
   );
