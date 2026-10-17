@@ -1,15 +1,27 @@
+import nodemailer, { type Transporter } from "nodemailer";
 import { env } from "./env";
 
+// Sends through the Hostinger mailbox over SMTP, so mail comes from a real oonava.com inbox.
+let transport: Transporter | null = null;
+function mailer() {
+  if (!env.smtpUser || !env.smtpPass) return null;
+  return (transport ??= nodemailer.createTransport({
+    host: env.smtpHost, port: env.smtpPort, secure: env.smtpPort === 465,
+    auth: { user: env.smtpUser, pass: env.smtpPass },
+    connectionTimeout: 10000, socketTimeout: 15000,
+  }));
+}
+
 export async function sendEmail(opts: { to: string; subject: string; text: string; html?: string; replyTo?: string }) {
-  if (!env.resendKey) { console.log("[email] (not configured)", opts.to, opts.subject); return false; }
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${env.resendKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: env.mailFrom, to: opts.to, subject: opts.subject, text: opts.text, html: opts.html, reply_to: opts.replyTo ?? env.teamEmail }),
-    signal: AbortSignal.timeout(15000),
-  });
-  if (!res.ok) console.error("[email]", res.status, await res.text());
-  return res.ok;
+  const t = mailer();
+  if (!t) { console.log("[email] (not configured)", opts.to, opts.subject); return false; }
+  try {
+    await t.sendMail({ from: env.mailFrom, to: opts.to, subject: opts.subject, text: opts.text, html: opts.html, replyTo: opts.replyTo ?? env.teamEmail });
+    return true;
+  } catch (e) {
+    console.error("[email]", e);
+    return false;
+  }
 }
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
