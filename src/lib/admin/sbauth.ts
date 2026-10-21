@@ -43,3 +43,24 @@ export async function deleteAuthUser(id: string) {
   const r = await call(`admin/users/${encodeURIComponent(id)}`, { method: "DELETE" });
   return r.ok;
 }
+
+// Ask Supabase to email a password-recovery link (uses the project's SMTP + "Reset password" template).
+export async function sendRecovery(email: string, redirectTo: string) {
+  const r = await call(`recover?redirect_to=${encodeURIComponent(redirectTo)}`, { method: "POST", body: JSON.stringify({ email }) });
+  if (!r.ok) console.error("[sbauth] recover", r.status, r.body);
+  return r.ok;
+}
+
+// Resolve a recovery link to a user id: either token_hash (our template) or an access token (default Supabase link).
+export async function recoveryUser(opts: { tokenHash?: string; accessToken?: string }): Promise<string | null> {
+  if (opts.tokenHash) {
+    const r = await call("verify", { method: "POST", body: JSON.stringify({ type: "recovery", token_hash: opts.tokenHash }) });
+    return r.ok ? (r.body.user?.id ?? null) : null;
+  }
+  if (opts.accessToken) {
+    const res = await fetch(`${URL_}/auth/v1/user`, { headers: { apikey: KEY, Authorization: `Bearer ${opts.accessToken}` }, cache: "no-store", signal: AbortSignal.timeout(15000) });
+    if (!res.ok) return null;
+    return (await res.json()).id ?? null;
+  }
+  return null;
+}

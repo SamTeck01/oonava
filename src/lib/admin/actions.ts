@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { authenticate, startSession, endSession, currentUser, demoLoginAllowed, type SessionUser } from "./auth";
 import { can, users, findUserByEmail, bootstrapAdmins, hashPassword, type Permission } from "./team";
-import { supabaseAuthEnabled, createAuthUser } from "./sbauth";
+import { supabaseAuthEnabled, createAuthUser, sendRecovery, recoveryUser, setAuthPassword } from "./sbauth";
 import { alertTeam } from "@/lib/automation/whatsapp";
 import { notify, notifyAdmins } from "./notify";
 import { allUsers } from "./team";
@@ -141,7 +141,7 @@ export async function sendLeadEmail(id: string, subject: string, body: string, w
   if (!subject.trim() || !body.trim()) return { ok: false, error: "Subject and message are required." };
   if (l.status === "Unsubscribed") return { ok: false, error: "This person unsubscribed. Don't email them." };
   const cta = withBooking && env.calendlyUrl ? { label: "Book a free mapping call", url: env.calendlyUrl } : undefined;
-  const mail = layout({ name: l.name, body: body.slice(0, 8000), cta, unsubscribeUrl: l.id.startsWith("demo_") ? undefined : unsubscribeUrl(l.id) });
+  const mail = layout({ name: l.name, body: body.slice(0, 8000), cta, unsubscribeUrl: l.id.startsWith("demo_") ? undefined : unsubscribeUrl(l.id), signature: { name: u.name.split(" ")[0], title: u.title || "Oonava" } });
   const ok = l.id.startsWith("demo_") ? true : await sendEmail({ to: l.email, subject: subject.slice(0, 200), ...mail });
   if (!ok) return { ok: false, error: "Email failed to send. Check RESEND_API_KEY and the domain in Resend." };
   const now = new Date().toISOString();
@@ -263,4 +263,34 @@ export async function logOutcome(id: string, outcome: Outcome, note: string, cal
   await track(u, `logged "${outcome}" with`, l.company || l.name, `/admin/leads/${id}`);
   refresh(id);
   revalidatePath("/admin/outreach");
+}
+
+/* ---------- Password recovery (Supabase) ---------- */
+
+const resets = new Map<string, number[]>();
+
+export async function requestPasswordReset(_: unknown, form: FormData) {
+  const email = str(form, "email", 200).toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Enter your work email." };
+  if (!supabaseAuthEnabled()) return { error: "Password reset isn't available in sample mode." };
+  const now = Date.now();
+  const recent = (resets.get(email) ?? []).filter((t) => now - t < 3_600_000);
+  if (recent.length < 3) {
+    resets.set(email, [...recent, now]);
+    await sendRecovery(email, `${env.siteUrl}/admin/reset`);
+  }
+  // Same answer whether or not the account exists.
+  return { ok: "If that account exists, a reset link is on its way to its inbox. The link works once and expires soon." };
+}
+
+export async function completePasswordReset(input: { tokenHash?: string; accessToken?: string; password: string; confirm: string }) {
+  if (!supabaseAuthEnabled()) return { error: "Password reset isn't available in sample mode." };
+  if (input.password.length < 10) return { error: "Use at least 10 characters." };
+  if (input.password !== input.confirm) return { error: "Passwords don't match." };
+  const id = await recoveryUser({ tokenHash: input.tokenHash?.slice(0, 200), accessToken: input.accessToken?.slice(0, 4000) });
+  if (!id) return { error: "This reset link is invalid or has expired. Request a new one." };
+  if (!(await setAuthPassword(id, input.password))) return { error: "Couldn't update the password. Try again." };
+  const profile = (await allUsers()).find((u) => u.id === id);
+  if (profile) await notify(profile, "Your password was changed", "Your Oonava dashboard password was just changed. If this wasn't you, tell an admin straight away.");
+  return { ok: "Password updated. You can sign in now." };
 }

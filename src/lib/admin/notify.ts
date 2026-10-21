@@ -10,7 +10,7 @@ export async function notify(to: Pick<User, "name" | "personal_email"> | null | 
   const address = to?.personal_email?.trim();
   if (!address) return false;
   try {
-    const mail = layout({ name: to!.name, body, cta: cta ? { label: cta.label, url: link(cta.path) } : undefined });
+    const mail = layout({ name: to!.name, body, kind: "team", cta: cta ? { label: cta.label, url: link(cta.path) } : undefined });
     return await sendEmail({ to: address, subject: `Oonava · ${subject}`, ...mail });
   } catch (e) {
     console.error("[notify]", e);
