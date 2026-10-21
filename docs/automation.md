@@ -32,10 +32,15 @@ Create a base (e.g. **Oonava CRM**) with a table named **Leads**. Field names mu
 | Score | Single select: Hot, Warm, Cold |
 | Score Reason | Long text |
 | Reply Sent | Long text |
-| Status | Single select: New, Contacted, Replied, Booked, Won, Lost, Unsubscribed |
+| Status | Single select: New, Contacted, Replied, Booked, Proposal, Won, Lost, Unsubscribed |
 | Follow-ups Sent | Number (integer) |
 | First Contacted | Date (with time) |
 | Last Contacted | Date (with time) |
+| Notes | Long text (admin dashboard) |
+| Activity | Long text (admin dashboard log) |
+| Deal Value | Number / currency, € (admin dashboard) |
+| Monthly Value | Number / currency, € (admin dashboard) |
+| Next Action | Date (admin dashboard) |
 
 Then create a **personal access token** (airtable.com/create/tokens) with scopes `data.records:read` and `data.records:write`, limited to this base. Send the token and the base ID (starts with `app…`, from the base URL) securely; don't use WhatsApp or email in plain text.
 
@@ -52,6 +57,7 @@ Set these in Vercel → Project → Settings → Environment Variables (see `.en
 | `AIRTABLE_TOKEN`, `AIRTABLE_BASE_ID` | From Delight |
 | `WHATSAPP_ALERTS` | Each person who wants alerts follows the WhatsApp setup at callmebot.com on their own phone and gets their own API key. Add everyone as `phone:apikey` pairs separated by commas, e.g. `+447700900123:123456,+2348012345678:654321`. CallMeBot can't post to WhatsApp groups. |
 | `NEXT_PUBLIC_CALENDLY_URL` | Your Calendly event link |
+| `ADMIN_PASSWORD` | Password for the admin dashboard at oonava.com/admin (at least 8 characters; make it long and share it only via a password manager) |
 | `AUTOMATION_SECRET`, `CRON_SECRET` | Any long random strings (e.g. `openssl rand -hex 32`) |
 | `CALENDLY_WEBHOOK_SIGNING_KEY` | Calendly webhook subscription (needs a paid Calendly plan); point it to `https://oonava.com/api/webhooks/calendly` for `invitee.created` |
 
@@ -62,3 +68,14 @@ After changing variables, redeploy. The follow-up job is defined in `vercel.json
 - **CallMeBot** is free and fine for internal alerts, but it's a third-party hobby service. If alerts become business-critical, move to Twilio or the WhatsApp Business API.
 - **Calendly webhooks** need a paid Calendly plan. Without it, mark booked leads as **Booked** in Airtable by hand.
 - **Vercel Hobby** runs cron jobs once a day, which is all this needs.
+
+## Admin dashboard (oonava.com/admin)
+
+Password-protected (`ADMIN_PASSWORD`). Until Airtable is connected it shows sample data.
+
+- **Today:** what to do now (reply to new leads, respond to replies, prepare for calls, chase proposals), key numbers and the pipeline.
+- **Pipeline:** every lead, searchable and filterable, as a list or board; change the stage from the list.
+- **Lead page:** AI summary, call/WhatsApp/email shortcuts, an AI email writer (reply, follow-up, book a call, after the call, cold outreach, win back) that sends from hello@oonava.com, notes, activity log, deal values, next action date, mark as won.
+- **Proposals:** AI-written proposal from the chosen package and prices, editable, saved as PDF from the browser; "Mark as sent" moves the lead to the Proposal stage.
+- **Add leads:** add one lead or import a CSV (name, email, company, phone, industry, website, city, notes; up to 500 rows).
+- **Clients:** won deals, monthly and yearly recurring revenue.

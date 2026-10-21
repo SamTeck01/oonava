@@ -151,3 +151,11 @@ input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius
 
 html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
+
+/* Admin proposal printing: only the proposal itself. */
+@media print {
+  body * { visibility: hidden; }
+  #proposal, #proposal * { visibility: visible; }
+  #proposal { position: absolute; inset: 0; background: #fff; color: #03030f; }
+  @page { margin: 16mm; }
+}

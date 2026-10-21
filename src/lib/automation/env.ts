@@ -14,6 +14,7 @@ export const env = {
   whatsappPhone: process.env.WHATSAPP_ALERT_PHONE,
   whatsappKey: process.env.CALLMEBOT_API_KEY,
   secret: process.env.AUTOMATION_SECRET ?? "",
+  adminPassword: process.env.ADMIN_PASSWORD ?? "",
   cronSecret: process.env.CRON_SECRET,
   calendlySigningKey: process.env.CALENDLY_WEBHOOK_SIGNING_KEY,
 };

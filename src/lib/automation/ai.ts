@@ -65,3 +65,26 @@ export async function analyse(lead: Lead): Promise<Analysis> {
     return fallback(lead);
   }
 }
+
+// Generic structured generation for the admin dashboard (drafts, proposals).
+export async function generateJson<T>(system: string, prompt: string, schema: object, fallback: T): Promise<T & { aiUsed: boolean }> {
+  if (!env.geminiKey) return { ...fallback, aiUsed: false };
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${env.geminiModel}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": env.geminiKey },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: "user", parts: [{ text: prompt.slice(0, 12000) }] }],
+        generationConfig: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.6 },
+      }),
+      signal: AbortSignal.timeout(45000),
+    });
+    if (!res.ok) throw new Error(`Gemini ${res.status}`);
+    const data = await res.json();
+    return { ...(JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}") as T), aiUsed: true };
+  } catch (e) {
+    console.error("[ai:generate]", e);
+    return { ...fallback, aiUsed: false };
+  }
+}
