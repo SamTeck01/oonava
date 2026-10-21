@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { assertPerm, currentUser, type SessionUser } from "./auth";
-import { users, hashPassword, can, type Permission } from "./team";
+import { users, getUser, allUsers, hashPassword, can, type Permission } from "./team";
+import { supabaseAuthEnabled, createAuthUser, setAuthPassword, deleteAuthUser } from "./sbauth";
 import { projects, tasks, invoices, PROJECT_STAGES, INVOICE_STATUS, DEFAULT_CHECKLIST, type Project, type Invoice } from "./work";
 import { track } from "./log";
 import type { Lead } from "./store";
@@ -106,52 +107,81 @@ export async function setInvoiceStatus(id: string, status: Invoice["status"]) {
 /* ---------- Team (admin) ---------- */
 
 const PERMS: Permission[] = ["admin", "sales", "outreach", "delivery", "finance", "marketing"];
+const permsFrom = (form: FormData) => PERMS.filter((p) => form.get(`perm_${p}`));
+
+async function activeAdmins() {
+  return (await allUsers()).filter((x) => x.status === "active" && x.permissions.includes("admin"));
+}
+
+export async function approveUser(id: string, form: FormData) {
+  const u = await assertPerm("admin");
+  const target = await getUser(id);
+  if (!target) return;
+  const permissions = permsFrom(form);
+  await users.update(id, { status: "active", permissions, title: str(form, "title", 120) || target.title });
+  await track(u, `approved ${target.name} as ${permissions.join(", ") || "no access"}:`, target.email, "/admin/team");
+  done("/admin/team");
+}
+
+export async function rejectUser(id: string) {
+  const u = await assertPerm("admin");
+  const target = await getUser(id);
+  if (!target || target.status !== "pending") return;
+  if (supabaseAuthEnabled()) await deleteAuthUser(id);
+  await users.remove(id);
+  await track(u, "rejected the account request from", target.email, "/admin/team");
+  done("/admin/team");
+}
 
 export async function inviteUser(_: unknown, form: FormData) {
   const u = await assertPerm("admin");
   const email = str(form, "email", 200).toLowerCase();
-  const password = str(form, "password", 200);
+  const password = String(form.get("password") ?? "");
   if (!str(form, "name") || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Name and a valid email are required." };
   if (password.length < 10) return { error: "Temporary password must be at least 10 characters." };
   if ((await users.where("email", email)).length) return { error: "Someone with that email already exists." };
-  const permissions = PERMS.filter((p) => form.get(`perm_${p}`));
-  await users.insert({ name: str(form, "name", 120), email, title: str(form, "title", 120), permissions, password_hash: hashPassword(password), active: true, last_login: null });
+  let id: string | undefined;
+  if (supabaseAuthEnabled()) {
+    const r = await createAuthUser(email, password);
+    if (!r.id) return { error: r.error };
+    id = r.id;
+  }
+  await users.insert({ ...(id ? { id } : {}), name: str(form, "name", 120), email, title: str(form, "title", 120), permissions: permsFrom(form), status: "active", password_hash: supabaseAuthEnabled() ? null : hashPassword(password), last_login: null });
   await track(u, "added team member", str(form, "name", 120), "/admin/team");
   done("/admin/team");
-  return { ok: `Added. Send ${email} their temporary password privately and ask them to change it after signing in.` };
+  return { ok: `Added. Send ${email} their temporary password privately and ask them to change it under My account.` };
 }
 
 export async function updateUser(id: string, form: FormData) {
   const u = await assertPerm("admin");
-  const target = await users.get(id);
+  const target = await getUser(id);
   if (!target) return;
-  const permissions = PERMS.filter((p) => form.get(`perm_${p}`));
-  // Never lock out the last admin.
-  if (!permissions.includes("admin") && target.permissions.includes("admin")) {
-    const admins = (await users.all()).filter((x) => x.active && x.permissions.includes("admin"));
-    if (admins.length <= 1 && process.env.ADMIN_EMAIL === undefined) throw new Error("Keep at least one admin.");
-  }
-  await users.update(id, { name: str(form, "name", 120) || target.name, title: str(form, "title", 120), permissions, active: form.get("active") === "on" });
-  await track(u, "updated access for", target.name, "/admin/team");
+  const permissions = permsFrom(form);
+  const status = form.get("active") === "on" ? "active" : "disabled";
+  const losingAdmin = target.permissions.includes("admin") && (!permissions.includes("admin") || status !== "active");
+  if (losingAdmin && (await activeAdmins()).length <= 1) throw new Error("Keep at least one active admin.");
+  await users.update(id, { name: str(form, "name", 120) || target.name, title: str(form, "title", 120), permissions, status });
+  await track(u, status === "active" ? "updated access for" : "switched off", target.name, "/admin/team");
   done("/admin/team");
 }
 
 export async function resetPassword(id: string, form: FormData) {
   const u = await assertPerm("admin");
-  const pw = str(form, "password", 200);
+  const pw = String(form.get("password") ?? "");
   if (pw.length < 10) return;
-  await users.update(id, { password_hash: hashPassword(pw) });
-  await track(u, "reset the password of", (await users.get(id))?.name ?? "a user", "/admin/team");
+  if (supabaseAuthEnabled()) { if (!(await setAuthPassword(id, pw))) throw new Error("Could not reset the password."); }
+  else await users.update(id, { password_hash: hashPassword(pw) });
+  await track(u, "reset the password of", (await getUser(id))?.name ?? "a user", "/admin/team");
   done("/admin/team");
 }
 
 export async function changeMyPassword(_: unknown, form: FormData) {
   const u = await currentUser();
   if (!u) return { error: "Not signed in." };
-  if (u.id === "owner") return { error: "The owner login is set in Vercel (ADMIN_PASSWORD)." };
-  const pw = str(form, "password", 200);
+  const pw = String(form.get("password") ?? "");
   if (pw.length < 10) return { error: "Use at least 10 characters." };
-  if (pw !== str(form, "confirm", 200)) return { error: "Passwords don't match." };
-  await users.update(u.id, { password_hash: hashPassword(pw) });
+  if (pw !== String(form.get("confirm") ?? "")) return { error: "Passwords don't match." };
+  if (supabaseAuthEnabled()) { if (!(await setAuthPassword(u.id, pw))) return { error: "Could not change the password. Try again." }; }
+  else await users.update(u.id, { password_hash: hashPassword(pw) });
   return { ok: "Password changed." };
 }

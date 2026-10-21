@@ -58,8 +58,8 @@ Set these in Vercel → Project → Settings → Environment Variables (see `.en
 | `AIRTABLE_TOKEN`, `AIRTABLE_BASE_ID` | From Delight |
 | `WHATSAPP_ALERTS` | Each person who wants alerts follows the WhatsApp setup at callmebot.com on their own phone and gets their own API key. Add everyone as `phone:apikey` pairs separated by commas, e.g. `+447700900123:123456,+2348012345678:654321`. CallMeBot can't post to WhatsApp groups. |
 | `NEXT_PUBLIC_CALENDLY_URL` | Your Calendly event link |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Owner "master key" login for oonava.com/admin (e.g. `samad@oonava.com` + a long password). Works even before any team member exists. |
-| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Optional. If set, team data (people, projects, tasks, invoices, activity) is stored in Supabase instead of Airtable. Run `docs/supabase.sql` first. |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | **Required for the admin dashboard.** Team logins (Supabase Auth) and team data. Run `docs/supabase.sql` first. The service-role key is secret: copy it from Supabase straight into Vercel. |
+| `ADMIN_EMAILS` | Comma-separated emails that become Admin automatically when they sign up, e.g. `samad@oonava.com`. Everyone else waits for approval. |
 | `AUTOMATION_SECRET`, `CRON_SECRET` | Any long random strings (e.g. `openssl rand -hex 32`) |
 | `CALENDLY_WEBHOOK_SIGNING_KEY` | Calendly webhook subscription (needs a paid Calendly plan); point it to `https://oonava.com/api/webhooks/calendly` for `invitee.created` |
 
@@ -73,7 +73,7 @@ After changing variables, redeploy. The follow-up job is defined in `vercel.json
 
 ## Admin dashboard (oonava.com/admin)
 
-A team workspace. Everyone has their own login (e.g. `samad@oonava.com`). These are usernames only, so no mailbox is needed. Admins set and reset passwords on the Team page.
+A team workspace. People request an account at **oonava.com/admin/signup** (e.g. `fel@oonava.com`). These are usernames only: accounts are created already confirmed, so no mailbox or confirmation email is needed. The request stays **pending** until an admin approves it on the Team page and ticks the person's roles. Admins can also reject requests, switch people off and reset passwords. Everyone changes their own password under My account.
 
 ### Access
 Each person gets permission switches, changeable any time on **Team**:
@@ -102,18 +102,9 @@ Everyone gets **Today** (their own to-do list and team activity), **Tasks** and 
 - **Team:** add people, switch permissions, deactivate, reset passwords.
 
 ### Where team data is stored
-1. **Supabase** if `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` are set (recommended: fast, no record limits). Run `docs/supabase.sql`.
-2. Otherwise **Airtable**, in the same base as Leads, in these tables (names exact):
-
-| Table | Fields (exact names and types) |
-|---|---|
-| **Team** | `name` (single line text, primary), `email` (email), `title` (single line text), `permissions` (multiple select: admin, sales, outreach, delivery, finance, marketing), `password_hash` (long text), `active` (checkbox), `last_login` (date with time) |
-| **Projects** | `name` (primary), `client`, `lead_id`, `package`, `stage` (single select: Onboarding, Building, Testing, Live, Support, Paused), `owner_id`, `due_date` (date), `setup_fee` (number), `monthly_fee` (number), `links` (long text), `notes` (long text) |
-| **Tasks** | `title` (primary), `details` (long text), `assignee_id`, `due_date` (date), `done` (checkbox), `project_id`, `lead_id`, `created_by` |
-| **Invoices** | `number` (primary), `client`, `project_id`, `kind` (single select: Setup, Monthly, Extra), `amount` (number), `currency` (single select: EUR, GBP), `due_date` (date), `status` (single select: Draft, Sent, Paid, Overdue, Cancelled), `paid_at` (date with time), `notes` (long text) |
-| **Activity** | `action` (primary), `user_id`, `user_name`, `target`, `link` |
-
-Fields without a type listed are single line text. Note: Airtable's free plan allows 1,000 records per base. The activity log and tasks grow quickly, so move team data to Supabase (free) once you're active.
+Supabase (required for logins). Run `docs/supabase.sql` in the Supabase SQL editor. Leads stay in Airtable.
 
 ### First login
-Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in Vercel and redeploy. Sign in, open **Team**, add Kelly, Delight and yourself as Admin, and add others with only what they need. Share temporary passwords privately; each person changes theirs under **My account**.
+1. Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and `ADMIN_EMAILS=samad@oonava.com` in Vercel and redeploy.
+2. Go to oonava.com/admin/signup and sign up with that email. You're approved as Admin automatically.
+3. Kelly and Delight sign up; approve them as Admin on the Team page. Others sign up and get only the roles they need.

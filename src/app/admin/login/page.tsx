@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { loginConfigured, currentUser, demoLoginAllowed } from "@/lib/admin/auth";
 import LoginForm from "@/components/admin/LoginForm";
 
@@ -14,8 +15,9 @@ export default async function Login() {
         <p className="text-2xl font-bold tracking-tight">oonava<span className="text-accent">.</span></p>
         <p className="mt-1 text-sm text-muted">Admin dashboard</p>
         {loginConfigured() ? <LoginForm /> : (
-          <p className="mt-8 rounded-xl bg-surface p-4 text-sm">The dashboard is locked. Add <b>ADMIN_EMAIL</b> and <b>ADMIN_PASSWORD</b> (owner login) in Vercel → Settings → Environment Variables, then redeploy.</p>
+          <p className="mt-8 rounded-xl bg-surface p-4 text-sm">The dashboard isn&apos;t connected yet. Add <b>SUPABASE_URL</b>, <b>SUPABASE_SERVICE_ROLE_KEY</b> and <b>ADMIN_EMAILS</b> in Vercel, then redeploy.</p>
         )}
+        <p className="mt-6 text-center text-sm text-muted">New to the team? <Link href="/admin/signup" className="font-semibold text-fg underline underline-offset-4">Request an account</Link></p>
         {demoLoginAllowed() && <p className="mt-4 rounded-xl bg-[#fff2d6] p-3 text-xs text-[#7a4b00]">Sample mode: sign in as kelly@, samad@, delight@ or fel@oonava.com with password <b>demo12345</b> to see each person&apos;s view.</p>}
       </div>
     </main>

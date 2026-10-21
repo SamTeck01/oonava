@@ -2,15 +2,16 @@
 -- Run in Supabase → SQL Editor, then set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel.
 -- Leads stay in Airtable. The website only talks to these tables server-side with the service-role key.
 
+-- Profiles for Supabase Auth users. id = auth.users.id. Passwords live in Supabase Auth, not here.
 create table if not exists team_users (
-  id uuid primary key default gen_random_uuid(),
+  id uuid primary key references auth.users(id) on delete cascade,
   created_at timestamptz not null default now(),
   name text not null,
   email text not null unique,
   title text not null default '',
   permissions text[] not null default '{}',
-  password_hash text not null,
-  active boolean not null default true,
+  status text not null default 'pending' check (status in ('pending', 'active', 'disabled')),
+  password_hash text,
   last_login timestamptz
 );
 

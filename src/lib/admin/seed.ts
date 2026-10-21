@@ -7,13 +7,14 @@ export function seed(): Record<string, Row[]> {
   const iso = (d: number) => new Date(now + d * day).toISOString();
   const date = (d: number) => iso(d).slice(0, 10);
   const pw = hashPassword("demo12345");
-  const u = (id: string, name: string, email: string, title: string, permissions: string[]) => ({ id, name, email, title, permissions, password_hash: pw, active: true, created_at: iso(-30), last_login: null });
+  const u = (id: string, name: string, email: string, title: string, permissions: string[], status = "active") => ({ id, name, email, title, permissions, password_hash: pw, status, created_at: iso(-30), last_login: null });
   return {
     team_users: [
       u("u_kelly", "Kelly", "kelly@oonava.com", "Founder", ["admin"]),
       u("u_samad", "Abdul Samad Oyewole", "samad@oonava.com", "Software & AI", ["admin"]),
       u("u_delight", "Delight", "delight@oonava.com", "Automation & CRM", ["admin"]),
       u("u_fel", "Fel", "fel@oonava.com", "Outreach", ["outreach"]),
+      { ...u("u_new", "Tunde Ade", "tunde@oonava.com", "", [], "pending"), created_at: iso(-0.05) },
     ],
     projects: [
       { id: "p_khan", created_at: iso(-18), name: "Lead engine", client: "Khan Realty", lead_id: "demo_7", package: "Connected Automation + AI", stage: "Building", owner_id: "u_delight", due_date: date(9), setup_fee: 4500, monthly_fee: 499, links: "Airtable: https://airtable.com\nMake: https://make.com", notes: "WhatsApp + email replies, Rightmove/Zoopla parsing." },

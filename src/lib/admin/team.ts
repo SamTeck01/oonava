@@ -13,15 +13,19 @@ export const PERMISSIONS = [
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number]["id"];
 
+export type UserStatus = "pending" | "active" | "disabled";
 export type User = Row & {
   name: string;
   email: string;
   title: string;
   permissions: Permission[];
-  password_hash: string;
-  active: boolean;
+  status: UserStatus;
+  password_hash?: string | null; // only used for sample data; real passwords live in Supabase Auth
   last_login?: string | null;
 };
+
+// Emails that become admin automatically when they sign up (the first admin).
+export const bootstrapAdmins = () => (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "").toLowerCase().split(",").map((e) => e.trim()).filter(Boolean);
 
 export const users = makeTable<User>("team_users", seed);
 
@@ -40,7 +44,7 @@ export function verifyPassword(pw: string, stored: string) {
 export const can = (u: { permissions: Permission[] } | null | undefined, p: Permission) => !!u && (u.permissions.includes("admin") || u.permissions.includes(p));
 
 // Airtable omits empty fields (unticked checkbox, empty multi-select), so normalise.
-export const normalise = (u: User): User => ({ ...u, permissions: (u.permissions ?? []) as Permission[], active: Boolean(u.active), title: u.title ?? "" });
+export const normalise = (u: User): User => ({ ...u, permissions: (u.permissions ?? []) as Permission[], status: (u.status ?? "pending") as UserStatus, title: u.title ?? "" });
 
 export async function findUserByEmail(email: string) {
   const rows = await users.where("email", email.toLowerCase().trim());
@@ -56,5 +60,5 @@ export async function allUsers() {
   return (await users.all("name.asc")).map(normalise);
 }
 
-export const publicUser = (u: User) => ({ id: u.id, name: u.name, email: u.email, title: u.title, permissions: u.permissions, active: u.active, last_login: u.last_login ?? null });
+export const publicUser = (u: User) => ({ id: u.id, name: u.name, email: u.email, title: u.title, permissions: u.permissions, status: u.status, active: u.status === "active", last_login: u.last_login ?? null, created_at: u.created_at ?? "" });
 export type PublicUser = ReturnType<typeof publicUser>;

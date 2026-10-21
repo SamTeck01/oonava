@@ -2,8 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { authenticate, startSession, endSession, currentUser, type SessionUser } from "./auth";
-import { can, type Permission } from "./team";
+import { authenticate, startSession, endSession, currentUser, demoLoginAllowed, type SessionUser } from "./auth";
+import { can, users, findUserByEmail, bootstrapAdmins, hashPassword, type Permission } from "./team";
+import { supabaseAuthEnabled, createAuthUser } from "./sbauth";
+import { alertTeam } from "@/lib/automation/whatsapp";
 import { track } from "./log";
 import type { Outcome } from "./constants";
 import { getLead, updateLead, createLead, logActivity, type Lead } from "./store";
@@ -20,13 +22,45 @@ export async function login(_: unknown, form: FormData) {
   const now = Date.now();
   const recent = (attempts.get("all") ?? []).filter((t) => now - t < 600_000);
   if (recent.length >= 10) return { error: "Too many attempts. Try again in 10 minutes." };
-  const u = await authenticate(String(form.get("email") ?? ""), String(form.get("password") ?? ""));
-  if (!u) {
+  const r = await authenticate(String(form.get("email") ?? ""), String(form.get("password") ?? ""));
+  if (r.pending) return { error: "Your account is waiting for an admin to approve it." };
+  if (r.disabled) return { error: "Your account has been switched off. Contact an admin." };
+  if (!r.user) {
     attempts.set("all", [...recent, now]);
     return { error: "Wrong email or password." };
   }
-  await startSession(u.id);
+  await startSession(r.user.id);
   redirect("/admin");
+}
+
+// Self sign-up: creates a confirmed Supabase Auth user and a pending profile that an admin must approve.
+const signups = new Map<string, number[]>();
+export async function signup(_: unknown, form: FormData) {
+  if (String(form.get("website") ?? "")) return { ok: true }; // honeypot
+  const now = Date.now();
+  const recent = (signups.get("all") ?? []).filter((t) => now - t < 3_600_000);
+  if (recent.length >= 20) return { error: "Too many sign-ups right now. Try again later." };
+  const name = str(form, "name", 120), email = str(form, "email", 200).toLowerCase(), password = String(form.get("password") ?? "");
+  if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Enter your name and a valid email." };
+  if (password.length < 10) return { error: "Use a password of at least 10 characters." };
+  if (password !== String(form.get("confirm") ?? "")) return { error: "Passwords don't match." };
+  if (await findUserByEmail(email)) return { error: "An account with that email already exists." };
+  signups.set("all", [...recent, now]);
+
+  const admin = bootstrapAdmins().includes(email);
+  let id: string;
+  if (supabaseAuthEnabled()) {
+    const r = await createAuthUser(email, password);
+    if (!r.id) return { error: r.error ?? "Could not create the account." };
+    id = r.id;
+  } else if (demoLoginAllowed()) {
+    id = `u_${Math.random().toString(36).slice(2, 10)}`;
+  } else return { error: "Sign-up isn't available yet." };
+
+  await users.insert({ id, name, email, title: str(form, "title", 120), permissions: admin ? ["admin"] : [], status: admin ? "active" : "pending", password_hash: supabaseAuthEnabled() ? null : hashPassword(password), last_login: null });
+  if (admin) return { ok: "You're the first admin. Sign in now." };
+  await alertTeam(`👤 New Oonava account request\n${name} (${email})\nApprove or reject: ${env.siteUrl}/admin/team`);
+  return { ok: "Request sent. An admin will approve your account and give you access. You'll be able to sign in once approved." };
 }
 
 export async function logout() {
