@@ -3,7 +3,7 @@ export const env = {
   siteUrl: process.env.SITE_URL ?? "https://oonava.com",
   calendlyUrl: process.env.NEXT_PUBLIC_CALENDLY_URL ?? "",
   geminiKey: process.env.GEMINI_API_KEY,
-  geminiModel: process.env.GEMINI_MODEL ?? "gemini-2.5-flash",
+  geminiModel: process.env.GEMINI_MODEL ?? "gemini-3.8-flash",
   resendKey: process.env.RESEND_API_KEY,
   mailFrom: process.env.MAIL_FROM ?? "Oonava <hello@oonava.com>",
   teamEmail: process.env.TEAM_EMAIL ?? "hello@oonava.com",
