@@ -185,3 +185,22 @@ export async function changeMyPassword(_: unknown, form: FormData) {
   else await users.update(u.id, { password_hash: hashPassword(pw) });
   return { ok: "Password changed." };
 }
+
+/* ---------- Connections (admin) ---------- */
+
+export async function testConnection(id: "airtable" | "resend"): Promise<{ ok: boolean; text: string }> {
+  const u = await assertPerm("admin");
+  const { env } = await import("@/lib/automation/env");
+  if (id === "airtable") {
+    const res = await fetch(`https://api.airtable.com/v0/${env.airtableBase}/${encodeURIComponent(env.airtableTable)}?pageSize=1`, { headers: { Authorization: `Bearer ${env.airtableToken}` }, cache: "no-store", signal: AbortSignal.timeout(15000) }).catch(() => null);
+    if (!res) return { ok: false, text: "Couldn't reach Airtable." };
+    if (res.ok) return { ok: true, text: `Connected. Reading the "${env.airtableTable}" table works.` };
+    if (res.status === 401) return { ok: false, text: "Token rejected. Check AIRTABLE_TOKEN." };
+    if (res.status === 403) return { ok: false, text: "Token has no access to this base. Add the base to the token's access list." };
+    if (res.status === 404) return { ok: false, text: `Base or table not found. Check AIRTABLE_BASE_ID and that the table is named "${env.airtableTable}".` };
+    return { ok: false, text: `Airtable returned ${res.status}.` };
+  }
+  const { sendEmail } = await import("@/lib/automation/email");
+  const ok = await sendEmail({ to: env.teamEmail, subject: "Oonava dashboard: email test", text: `Test email sent by ${u.name} from the Connections page. If you got this, email sending works.` });
+  return ok ? { ok: true, text: `Test email sent to ${env.teamEmail}. Check the inbox (and spam).` } : { ok: false, text: "Sending failed. Check RESEND_API_KEY and that oonava.com is verified in Resend." };
+}

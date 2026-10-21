@@ -1,0 +1,20 @@
+import "server-only";
+import { env } from "@/lib/automation/env";
+
+export type Connection = { id: string; name: string; does: string; connected: boolean; detail: string; vars: string[]; connectUrl: string; connectLabel: string; steps: string[]; testable?: boolean };
+
+const has = (...v: (string | undefined)[]) => v.every((x) => !!x && x.length > 0);
+
+// Only reports whether settings exist; secret values are never shown.
+export function connections(): Connection[] {
+  const wa = (process.env.WHATSAPP_ALERTS ?? "").split(",").filter((x) => x.includes(":")).length + (env.whatsappPhone && env.whatsappKey ? 1 : 0);
+  return [
+    { id: "supabase", name: "Supabase", does: "Team logins, projects, tasks, invoices, activity", connected: has(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY), detail: process.env.SUPABASE_URL ? new URL(process.env.SUPABASE_URL).host : "", vars: ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"], connectUrl: "https://supabase.com/dashboard/project/_/settings/api-keys", connectLabel: "Open Supabase API keys", steps: ["Copy the Project URL and the service_role (secret) key", "Add them in Vercel as SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY", "Redeploy"] },
+    { id: "airtable", name: "Airtable (Leads table)", does: "Website enquiries, pipeline, outreach", connected: has(env.airtableToken, env.airtableBase), detail: env.airtableBase ? `Base ${env.airtableBase.slice(0, 6)}… · table "${env.airtableTable}"` : "", vars: ["AIRTABLE_TOKEN", "AIRTABLE_BASE_ID", "AIRTABLE_TABLE"], connectUrl: "https://airtable.com/create/tokens", connectLabel: "Create Airtable token", steps: ["Create a token with data.records:read and data.records:write on the Oonava CRM base", "Copy the base ID (starts with app…) from the base URL", "Add AIRTABLE_TOKEN, AIRTABLE_BASE_ID and AIRTABLE_TABLE=Leads in Vercel", "Redeploy, then press Test below"], testable: true },
+    { id: "gemini", name: "Gemini AI", does: "Lead scoring, reply emails, proposals", connected: has(env.geminiKey), detail: `Model: ${env.geminiModel}`, vars: ["GEMINI_API_KEY", "GEMINI_MODEL (optional)"], connectUrl: "https://aistudio.google.com/apikey", connectLabel: "Get API key", steps: ["Create a key in Google AI Studio", "Add it in Vercel as GEMINI_API_KEY", "Turn on paid billing before real client data goes through it"] },
+    { id: "resend", name: "Email (Resend)", does: "Replies, follow-ups and emails sent from the dashboard", connected: has(env.resendKey), detail: `From: ${env.mailFrom}`, vars: ["RESEND_API_KEY", "MAIL_FROM", "TEAM_EMAIL"], connectUrl: "https://resend.com/api-keys", connectLabel: "Open Resend", steps: ["Verify the oonava.com domain in Resend (DNS records in Hostinger)", "Create an API key and add it in Vercel as RESEND_API_KEY", "Press Test below to email yourself"], testable: true },
+    { id: "whatsapp", name: "WhatsApp alerts", does: "New lead, booking and account request alerts", connected: wa > 0, detail: wa ? `${wa} recipient${wa > 1 ? "s" : ""}` : "", vars: ["WHATSAPP_ALERTS"], connectUrl: "https://www.callmebot.com/blog/free-api-whatsapp-messages/", connectLabel: "CallMeBot setup", steps: ["Each person activates CallMeBot on their phone and gets a key", "Add WHATSAPP_ALERTS as +number:key pairs, comma-separated"] },
+    { id: "calendly", name: "Calendly", does: "Booking button on the site and in emails", connected: has(env.calendlyUrl), detail: env.calendlyUrl, vars: ["NEXT_PUBLIC_CALENDLY_URL", "CALENDLY_WEBHOOK_SIGNING_KEY (paid plan)"], connectUrl: "https://calendly.com/event_types/user/me", connectLabel: "Open Calendly", steps: ["Copy your event link into NEXT_PUBLIC_CALENDLY_URL", "Optional (paid plan): webhook to https://oonava.com/api/webhooks/calendly"] },
+    { id: "secrets", name: "Security keys", does: "Unsubscribe links, sessions and the daily follow-up job", connected: has(env.secret, env.cronSecret), detail: "", vars: ["AUTOMATION_SECRET", "CRON_SECRET"], connectUrl: "https://vercel.com/dashboard", connectLabel: "Open Vercel", steps: ["Add two long random strings as AUTOMATION_SECRET and CRON_SECRET"] },
+  ];
+}

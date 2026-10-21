@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useTransition } from "react";
 import { toggleTask, deleteTask } from "@/lib/admin/work-actions";
+import { SampleTag } from "./Badges";
 
-export type TaskView = { id: string; title: string; done: boolean; due: string | null; assignee: string; context?: { label: string; href: string } | null; canDelete?: boolean };
+export type TaskView = { id: string; title: string; done: boolean; due: string | null; assignee: string; context?: { label: string; href: string } | null; canDelete?: boolean; sample?: boolean };
 
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -26,7 +27,7 @@ function Item({ t, showAssignee }: { t: TaskView; showAssignee: boolean }) {
     <li className={`flex items-start gap-3 py-3 ${pending ? "opacity-50" : ""}`}>
       <button onClick={() => start(() => toggleTask(t.id))} aria-label={t.done ? "Mark as not done" : "Mark as done"} className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 text-xs ${t.done ? "border-[#146c2e] bg-[#146c2e] text-white" : "border-line hover:border-fg"}`}>{t.done ? "✓" : ""}</button>
       <div className="min-w-0 flex-1">
-        <p className={`font-medium ${t.done ? "text-muted line-through" : ""}`}>{t.title}</p>
+        <p className={`font-medium ${t.done ? "text-muted line-through" : ""}`}>{t.title} <SampleTag show={!!t.sample} /></p>
         <p className="flex flex-wrap gap-x-3 text-xs">
           {due && !t.done && <span className={due.cls} suppressHydrationWarning>{due.text}</span>}
           {showAssignee && <span className="text-muted">{t.assignee}</span>}

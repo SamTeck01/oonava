@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { PERMISSION_LIST } from "@/lib/admin/constants";
 import { updateUser, resetPassword, approveUser, rejectUser } from "@/lib/admin/work-actions";
 import { ago } from "@/lib/admin/format";
-import { Panel } from "@/components/admin/Badges";
+import { Panel, SampleTag } from "@/components/admin/Badges";
+import { teamDbEnabled } from "@/lib/admin/db";
 import InviteForm from "@/components/admin/InviteForm";
 
 export const metadata = { title: "Team" };
@@ -28,7 +29,7 @@ export default async function Team() {
           <div className="mt-4 space-y-4">
             {pending.map((u) => (
               <div key={u.id} className="rounded-2xl border border-line p-4">
-                <p className="font-semibold">{u.name} <span className="font-normal text-muted">· {u.email}</span></p>
+                <p className="font-semibold">{u.name} <span className="font-normal text-muted">· {u.email}</span> <SampleTag show={!teamDbEnabled()} /></p>
                 <p className="text-xs text-muted">Requested {ago(String(u.created_at ?? ""))}{u.title ? ` · says: ${u.title}` : ""}</p>
                 <form action={approveUser.bind(null, u.id)} className="mt-3 space-y-3">
                   <input name="title" defaultValue={u.title} placeholder="Role title, e.g. Sales" className={input} />
@@ -52,7 +53,7 @@ export default async function Team() {
       )}
       <div className="grid gap-4 lg:grid-cols-2">
         {team.map((u) => (
-          <Panel key={u.id} title={u.name} action={<span className={`rounded-full px-3 py-1 text-xs font-semibold ${u.status === "active" ? "bg-[#e3f6e8] text-[#146c2e]" : "bg-surface text-muted"}`}>{u.status === "active" ? "Active" : "Off"}</span>}>
+          <Panel key={u.id} title={`${u.name}${teamDbEnabled() ? "" : "  (sample)"}`} action={<span className={`rounded-full px-3 py-1 text-xs font-semibold ${u.status === "active" ? "bg-[#e3f6e8] text-[#146c2e]" : "bg-surface text-muted"}`}>{u.status === "active" ? "Active" : "Off"}</span>}>
             <p className="-mt-2 mb-4 text-sm text-muted">{u.email}{u.last_login ? ` · last in ${ago(String(u.last_login))}` : " · never signed in"}</p>
             <form action={updateUser.bind(null, u.id)} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">

@@ -30,7 +30,10 @@ export type Lead = {
   assignedTo: string;
 };
 
-export const isDemo = () => !airtableEnabled();
+// Sample leads only while testing. On the live site without Airtable the pipeline is simply empty.
+const sampleAllowed = () => process.env.NODE_ENV !== "production" || process.env.ALLOW_DEMO_LOGIN === "true";
+export const isDemo = () => !airtableEnabled() && sampleAllowed();
+export const leadsConnected = () => airtableEnabled();
 
 function fromRecord(r: { id: string; fields: LeadRecord; createdTime?: string }): Lead {
   const f = r.fields;
@@ -69,12 +72,14 @@ const demo = () => (g.__oonavaDemo ??= [
 ]);
 
 export async function listLeads(): Promise<Lead[]> {
+  if (!airtableEnabled() && !isDemo()) return [];
   const rows = isDemo() ? [...demo()] : (await atList()).map(fromRecord);
   return rows.sort((a, b) => (b.created || "").localeCompare(a.created || ""));
 }
 
 export async function getLead(id: string): Promise<Lead | null> {
   if (isDemo()) return demo().find((l) => l.id === id) ?? null;
+  if (!airtableEnabled()) return null;
   const r = await atGet(id);
   return r ? fromRecord(r) : null;
 }
@@ -85,6 +90,7 @@ export async function updateLead(id: string, patch: Partial<Lead>) {
     if (l) Object.assign(l, patch);
     return Boolean(l);
   }
+  if (!airtableEnabled()) return false;
   return atUpdate(id, toRecord(patch));
 }
 
@@ -95,6 +101,7 @@ export async function createLead(data: Partial<Lead> & { name: string; email: st
     demo().unshift(l);
     return l.id;
   }
+  if (!airtableEnabled()) return null;
   return atCreate({ ...(toRecord(data) as LeadRecord), Status: data.status ?? "New", "Follow-ups Sent": 0 });
 }
 

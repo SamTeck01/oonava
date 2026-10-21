@@ -2,7 +2,7 @@ import { requireAny } from "@/lib/admin/auth";
 import Link from "next/link";
 import { listLeads, estimatedValue, monthlyFor } from "@/lib/admin/store";
 import { eur } from "@/lib/admin/format";
-import { Panel } from "@/components/admin/Badges";
+import { Panel, SampleTag } from "@/components/admin/Badges";
 
 export const metadata = { title: "Clients" };
 
@@ -25,7 +25,7 @@ export default async function Clients() {
             {clients.map((c) => (
               <li key={c.id}>
                 <Link href={`/admin/leads/${c.id}`} className="flex flex-wrap items-center justify-between gap-3 py-3 hover:opacity-80">
-                  <span><b>{c.company || c.name}</b><span className="block text-sm text-muted">{c.name} · {c.tier || "Custom"}</span></span>
+                  <span><b className="mr-2">{c.company || c.name}</b><SampleTag show={c.id.startsWith("demo_")} /><span className="block text-sm text-muted">{c.name} · {c.tier || "Custom"}</span></span>
                   <span className="text-right tabular-nums"><b>{eur(monthlyFor(c))}</b><span className="text-muted">/mo</span><span className="block text-xs text-muted">{eur(estimatedValue(c))} setup</span></span>
                 </Link>
               </li>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { STATUSES } from "@/lib/automation/airtable";
 import { eur, ago } from "@/lib/admin/format";
-import { ScoreBadge } from "./Badges";
+import { ScoreBadge, SampleTag } from "./Badges";
 import StatusSelect from "./StatusSelect";
 
 type Row = { id: string; name: string; company: string; email: string; summary: string; status: string; score: string; tier: string; source: string; created: string; value: number; nextAction: string };
@@ -54,7 +54,7 @@ export default function LeadsBoard({ leads, initialStatus }: { leads: Row[]; ini
             {shown.map((l) => (
               <li key={l.id} className="flex items-center gap-3 p-4 hover:bg-surface/60">
                 <Link href={`/admin/leads/${l.id}`} className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-2 font-semibold">{l.name}<ScoreBadge score={l.score} />{l.company && <span className="font-normal text-muted">· {l.company}</span>}</span>
+                  <span className="flex flex-wrap items-center gap-2 font-semibold">{l.name}<ScoreBadge score={l.score} /><SampleTag show={l.id.startsWith("demo_")} />{l.company && <span className="font-normal text-muted">· {l.company}</span>}</span>
                   <span className="block truncate text-sm text-muted">{l.summary}</span>
                   <span className="mt-1 block text-xs text-muted" suppressHydrationWarning>{l.source} · {ago(l.created)}{l.tier ? ` · ${l.tier}` : ""}{l.value ? ` · ${eur(l.value)}` : ""}</span>
                 </Link>
@@ -76,6 +76,7 @@ export default function LeadsBoard({ leads, initialStatus }: { leads: Row[]; ini
                     {col.map((l) => (
                       <Link key={l.id} href={`/admin/leads/${l.id}`} className="block rounded-xl border border-line p-3 hover:border-fg">
                         <span className="flex items-center justify-between gap-2"><b className="truncate text-sm">{l.name}</b><ScoreBadge score={l.score} /></span>
+                        {l.id.startsWith("demo_") && <span className="mt-1 block"><SampleTag /></span>}
                         <span className="mt-1 line-clamp-2 block text-xs text-muted">{l.company || l.summary}</span>
                       </Link>
                     ))}

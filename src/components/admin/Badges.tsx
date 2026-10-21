@@ -17,3 +17,8 @@ export function Panel({ title, children, action, className = "" }: { title?: str
     </section>
   );
 }
+
+export function SampleTag({ show = true }: { show?: boolean }) {
+  if (!show) return null;
+  return <span title="Sample data for testing, not real" className="inline-flex rounded-full border border-dashed border-[#b07d00] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#7a4b00]">Sample</span>;
+}

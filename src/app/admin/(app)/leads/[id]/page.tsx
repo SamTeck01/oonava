@@ -5,7 +5,7 @@ import { getLead, estimatedValue, monthlyFor } from "@/lib/admin/store";
 import { saveDetails, addNote, markWon } from "@/lib/admin/actions";
 import { tiers } from "@/lib/content";
 import { eur, ago } from "@/lib/admin/format";
-import { ScoreBadge, Panel } from "@/components/admin/Badges";
+import { ScoreBadge, Panel, SampleTag } from "@/components/admin/Badges";
 import StatusSelect from "@/components/admin/StatusSelect";
 import EmailComposer from "@/components/admin/EmailComposer";
 import AssignSelect from "@/components/admin/AssignSelect";
@@ -36,7 +36,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="flex flex-wrap items-center gap-3 text-3xl font-semibold tracking-tight">{l.name}<ScoreBadge score={l.score} /></h1>
+          <h1 className="flex flex-wrap items-center gap-3 text-3xl font-semibold tracking-tight">{l.name}<ScoreBadge score={l.score} /><SampleTag show={l.id.startsWith("demo_")} /></h1>
           <p className="mt-1 text-muted">{[l.company, l.industry, l.source, l.created && ago(l.created)].filter(Boolean).join(" · ")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">

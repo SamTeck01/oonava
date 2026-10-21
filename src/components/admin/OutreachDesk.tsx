@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { logOutcome } from "@/lib/admin/actions";
 import { OUTCOMES, SCRIPTS, type Outcome } from "@/lib/admin/constants";
 import EmailComposer from "./EmailComposer";
+import { SampleTag } from "./Badges";
 
 type P = { id: string; name: string; company: string; email: string; phone: string; industry: string; notes: string; summary: string; status: string; source: string; nextAction: string; mine: boolean; activity: string[] };
 
@@ -56,7 +57,7 @@ export default function OutreachDesk({ queue, doneToday, me }: { queue: P[]; don
             {list.map((x) => (
               <li key={x.id}>
                 <button onClick={() => { setSel(x.id); setMsg(""); }} className={`w-full rounded-xl px-3 py-2.5 text-left ${x.id === p.id ? "bg-fg text-bg" : "hover:bg-surface"}`}>
-                  <span className="block truncate font-semibold">{x.company || x.name}</span>
+                  <span className="flex items-center gap-2"><span className="truncate font-semibold">{x.company || x.name}</span><SampleTag show={x.id.startsWith("demo_")} /></span>
                   <span className={`block truncate text-xs ${x.id === p.id ? "opacity-70" : "text-muted"}`}>{x.status === "New" ? "Not contacted" : `Call back ${x.nextAction}`}{x.mine ? " · yours" : ""}</span>
                 </button>
               </li>
@@ -67,7 +68,7 @@ export default function OutreachDesk({ queue, doneToday, me }: { queue: P[]; don
             <section className="rounded-[20px] border border-line bg-bg p-5 md:p-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-2xl font-semibold tracking-tight">{p.company || p.name}</h2>
+                  <h2 className="flex flex-wrap items-center gap-2 text-2xl font-semibold tracking-tight">{p.company || p.name}<SampleTag show={p.id.startsWith("demo_")} /></h2>
                   <p className="text-sm text-muted">{[p.name !== p.company && p.name, p.industry, p.source].filter(Boolean).join(" · ")}</p>
                 </div>
                 <Link href={`/admin/leads/${p.id}`} className="text-sm text-accent-strong">Full lead →</Link>

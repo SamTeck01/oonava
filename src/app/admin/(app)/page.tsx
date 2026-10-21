@@ -5,7 +5,8 @@ import { listLeads, estimatedValue, monthlyFor, type Lead } from "@/lib/admin/st
 import { projects, invoices, activity } from "@/lib/admin/work";
 import { taskViews, myOpenTasks } from "@/lib/admin/views";
 import { eur, ago, OPEN } from "@/lib/admin/format";
-import { ScoreBadge, Panel } from "@/components/admin/Badges";
+import { ScoreBadge, Panel, SampleTag } from "@/components/admin/Badges";
+import { teamDbEnabled } from "@/lib/admin/db";
 import TaskList from "@/components/admin/TaskList";
 
 export const metadata = { title: "Today" };
@@ -87,7 +88,7 @@ export default async function Today({ searchParams }: { searchParams: Promise<{ 
                     <li key={t.lead.id}>
                       <Link href={`/admin/leads/${t.lead.id}`} className="flex items-center gap-3 py-3 hover:opacity-80">
                         <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${t.urgent ? "bg-[#c8322f]" : "bg-line"}`} aria-hidden />
-                        <span className="min-w-0 flex-1"><span className="flex flex-wrap items-center gap-2 font-semibold">{t.lead.name}<ScoreBadge score={t.lead.score} /></span><span className="block truncate text-sm text-muted">{t.lead.company ? `${t.lead.company} · ` : ""}{t.why}</span></span>
+                        <span className="min-w-0 flex-1"><span className="flex flex-wrap items-center gap-2 font-semibold">{t.lead.name}<ScoreBadge score={t.lead.score} /><SampleTag show={t.lead.id.startsWith("demo_")} /></span><span className="block truncate text-sm text-muted">{t.lead.company ? `${t.lead.company} · ` : ""}{t.why}</span></span>
                         <span className="shrink-0 whitespace-nowrap rounded-full bg-fg px-3 py-1.5 text-xs font-semibold text-bg">{t.action} →</span>
                       </Link>
                     </li>
@@ -101,7 +102,7 @@ export default async function Today({ searchParams }: { searchParams: Promise<{ 
             <Panel title={`Projects in progress (${myProjects.length})`} action={<Link href="/admin/projects" className="text-sm text-accent-strong">All projects →</Link>}>
               {myProjects.length === 0 ? <p className="text-sm text-muted">No active projects.</p> : (
                 <ul className="divide-y divide-line">{myProjects.map((p) => (
-                  <li key={p.id}><Link href={`/admin/projects/${p.id}`} className="flex items-center justify-between gap-3 py-3 hover:opacity-80"><span><b>{p.client}</b><span className="block text-sm text-muted">{p.name}</span></span><span className="rounded-full bg-surface px-3 py-1 text-xs font-semibold">{p.stage}</span></Link></li>
+                  <li key={p.id}><Link href={`/admin/projects/${p.id}`} className="flex items-center justify-between gap-3 py-3 hover:opacity-80"><span><b className="mr-2">{p.client}</b><SampleTag show={!teamDbEnabled()} /><span className="block text-sm text-muted">{p.name}</span></span><span className="rounded-full bg-surface px-3 py-1 text-xs font-semibold">{p.stage}</span></Link></li>
                 ))}</ul>
               )}
             </Panel>
@@ -109,7 +110,7 @@ export default async function Today({ searchParams }: { searchParams: Promise<{ 
 
           {finance && overdue.length > 0 && (
             <Panel title={`Unpaid & overdue (${overdue.length})`} action={<Link href="/admin/invoices" className="text-sm text-accent-strong">Invoices →</Link>}>
-              <ul className="divide-y divide-line">{overdue.map((i) => <li key={i.id} className="flex justify-between py-2 text-sm"><span>{i.client} · {i.number}</span><b className="text-[#c8322f]">{eur(Number(i.amount))}</b></li>)}</ul>
+              <ul className="divide-y divide-line">{overdue.map((i) => <li key={i.id} className="flex justify-between py-2 text-sm"><span>{i.client} · {i.number} <SampleTag show={!teamDbEnabled()} /></span><b className="text-[#c8322f]">{eur(Number(i.amount))}</b></li>)}</ul>
             </Panel>
           )}
         </div>
@@ -120,7 +121,7 @@ export default async function Today({ searchParams }: { searchParams: Promise<{ 
               {feed.slice(0, 15).map((a) => (
                 <li key={a.id} className="flex gap-3">
                   <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-surface text-xs font-bold">{String(a.user_name || "?")[0]}</span>
-                  <span className="min-w-0"><b>{a.user_name}</b> {a.action} {a.link ? <Link href={String(a.link)} className="font-semibold text-accent-strong">{a.target}</Link> : <b>{a.target}</b>}<span className="block text-xs text-muted">{ago(String(a.created_at))}</span></span>
+                  <span className="min-w-0"><SampleTag show={!teamDbEnabled()} /> <b>{a.user_name}</b> {a.action} {a.link ? <Link href={String(a.link)} className="font-semibold text-accent-strong">{a.target}</Link> : <b>{a.target}</b>}<span className="block text-xs text-muted">{ago(String(a.created_at))}</span></span>
                 </li>
               ))}
             </ul>

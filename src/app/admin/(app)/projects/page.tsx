@@ -7,7 +7,8 @@ import { teamMap } from "@/lib/admin/views";
 import { tiers } from "@/lib/content";
 import { createProject } from "@/lib/admin/work-actions";
 import { eur } from "@/lib/admin/format";
-import { Panel } from "@/components/admin/Badges";
+import { Panel, SampleTag } from "@/components/admin/Badges";
+import { teamDbEnabled } from "@/lib/admin/db";
 
 export const metadata = { title: "Projects" };
 
@@ -35,7 +36,7 @@ export default async function Projects() {
                     const pct = pt.length ? Math.round((pt.filter((t) => t.done).length / pt.length) * 100) : 0;
                     return (
                       <Link key={p.id} href={`/admin/projects/${p.id}`} className="block rounded-xl border border-line p-3 hover:border-fg">
-                        <b className="block truncate text-sm">{p.client}</b>
+                        <span className="flex items-center justify-between gap-1"><b className="truncate text-sm">{p.client}</b><SampleTag show={!teamDbEnabled()} /></span>
                         <span className="block truncate text-xs text-muted">{p.name}</span>
                         <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-surface"><span className="block h-full bg-accent-strong" style={{ width: `${pct}%` }} /></span>
                         <span className="mt-1 flex justify-between text-[11px] text-muted"><span>{team.name(p.owner_id)}</span><span>{pct}%</span></span>

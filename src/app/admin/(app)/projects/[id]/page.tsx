@@ -7,7 +7,8 @@ import { teamMap, taskViews } from "@/lib/admin/views";
 import { updateProject, addTask } from "@/lib/admin/work-actions";
 import { tiers } from "@/lib/content";
 import { eur } from "@/lib/admin/format";
-import { Panel } from "@/components/admin/Badges";
+import { Panel, SampleTag } from "@/components/admin/Badges";
+import { teamDbEnabled } from "@/lib/admin/db";
 import TaskList from "@/components/admin/TaskList";
 
 export const metadata = { title: "Project" };
@@ -33,7 +34,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       <Link href="/admin/projects" className="text-sm text-muted hover:text-fg">← Projects</Link>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">{p.client}</h1>
+          <h1 className="flex flex-wrap items-center gap-3 text-3xl font-semibold tracking-tight">{p.client}<SampleTag show={!teamDbEnabled()} /></h1>
           <p className="text-muted">{p.name} · {p.package || "Custom"} · owner {team.name(p.owner_id)}</p>
         </div>
         <span className="rounded-full bg-fg px-4 py-2 text-sm font-semibold text-bg">{p.stage}</span>

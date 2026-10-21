@@ -3,7 +3,8 @@ import { can } from "@/lib/admin/team";
 import { redirect } from "next/navigation";
 import { invoices, projects } from "@/lib/admin/work";
 import { createInvoice } from "@/lib/admin/work-actions";
-import { Panel } from "@/components/admin/Badges";
+import { Panel, SampleTag } from "@/components/admin/Badges";
+import { teamDbEnabled } from "@/lib/admin/db";
 import InvoiceStatus from "@/components/admin/InvoiceStatus";
 
 export const metadata = { title: "Invoices" };
@@ -38,7 +39,7 @@ export default async function Invoices() {
               <thead><tr className="text-left text-xs text-muted"><th className="p-2">Number</th><th className="p-2">Client</th><th className="p-2">Type</th><th className="p-2 text-right">Amount</th><th className="p-2">Due</th><th className="p-2">Status</th></tr></thead>
               <tbody>{invs.map((i) => (
                 <tr key={i.id} className="border-t border-line">
-                  <td className="p-2 font-mono text-xs">{i.number}</td><td className="p-2 font-semibold">{i.client}</td><td className="p-2">{i.kind}</td>
+                  <td className="p-2 font-mono text-xs">{i.number} <SampleTag show={!teamDbEnabled()} /></td><td className="p-2 font-semibold">{i.client}</td><td className="p-2">{i.kind}</td>
                   <td className="p-2 text-right tabular-nums">{money(Number(i.amount), String(i.currency || "EUR"))}</td>
                   <td className={`p-2 ${isOverdue(i) ? "font-semibold text-[#c8322f]" : "text-muted"}`}>{i.due_date ? new Date(String(i.due_date)).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "–"}</td>
                   <td className="p-2"><InvoiceStatus id={i.id} status={isOverdue(i) && i.status === "Sent" ? "Overdue" : String(i.status)} /></td>

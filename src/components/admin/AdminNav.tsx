@@ -16,6 +16,7 @@ const ICON = {
   clients: "M16 11a4 4 0 1 0-8 0M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5",
   invoices: "M6 2h9l5 5v15H6zM14 2v6h6M9 13h6M9 17h6",
   team: "M17 20c0-2.8-2.2-5-5-5s-5 2.2-5 5M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 20c0-2.2-1.3-4-3.2-4.7M17 4.3a4 4 0 0 1 0 7.4",
+  link: "M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7",
   account: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z",
 };
 
@@ -29,6 +30,7 @@ const ALL: { href: string; label: string; icon: keyof typeof ICON; perms: Perm[]
   { href: "/admin/clients", label: "Clients", icon: "clients", perms: ["sales", "finance"] },
   { href: "/admin/invoices", label: "Invoices", icon: "invoices", perms: ["finance"] },
   { href: "/admin/team", label: "Team", icon: "team", perms: ["admin"] },
+  { href: "/admin/connections", label: "Connections", icon: "link", perms: ["admin"] },
   { href: "/admin/account", label: "My account", icon: "account", perms: null },
 ];
 

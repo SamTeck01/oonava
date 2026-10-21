@@ -4,6 +4,7 @@ import { tasks, projects, type Task } from "./work";
 import type { SessionUser } from "./auth";
 import { can } from "./team";
 import type { TaskView } from "@/components/admin/TaskList";
+import { teamDbEnabled } from "./db";
 
 export async function teamMap() {
   const us = await allUsers();
@@ -19,6 +20,7 @@ export async function taskViews(rows: Task[], me: SessionUser): Promise<TaskView
       id: t.id, title: t.title, done: Boolean(t.done), due: (t.due_date as string) || null, assignee: name(t.assignee_id),
       context: t.project_id ? { label: pname.get(t.project_id) ?? "Project", href: `/admin/projects/${t.project_id}` } : t.lead_id ? { label: "Lead", href: `/admin/leads/${t.lead_id}` } : null,
       canDelete: t.created_by === me.id || can(me, "admin"),
+      sample: !teamDbEnabled(),
     }))
     .sort((a, b) => Number(a.done) - Number(b.done) || (a.due ?? "9999").localeCompare(b.due ?? "9999"));
 }
