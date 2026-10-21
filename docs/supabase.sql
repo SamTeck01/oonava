@@ -1,4 +1,4 @@
--- Optional: Oonava team data in Supabase (faster, no record limits).
+-- Oonava admin dashboard: team logins (Supabase Auth) and team data. Applied to project "Oonava Admin Dashboard".
 -- Run in Supabase → SQL Editor, then set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel.
 -- Leads stay in Airtable. The website only talks to these tables server-side with the service-role key.
 
@@ -22,7 +22,7 @@ create table if not exists projects (
   client text not null default '',
   lead_id text,
   package text not null default '',
-  stage text not null default 'Onboarding',
+  stage text not null default 'Onboarding' check (stage in ('Onboarding','Building','Testing','Live','Support','Paused')),
   owner_id text,
   due_date date,
   setup_fee numeric not null default 0,
@@ -47,14 +47,14 @@ create table if not exists tasks (
 create table if not exists invoices (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
-  number text not null,
+  number text not null unique,
   client text not null default '',
   project_id text,
-  kind text not null default 'Setup',
+  kind text not null default 'Setup' check (kind in ('Setup','Monthly','Extra')),
   amount numeric not null default 0,
-  currency text not null default 'EUR',
+  currency text not null default 'EUR' check (currency in ('EUR','GBP')),
   due_date date,
-  status text not null default 'Draft',
+  status text not null default 'Draft' check (status in ('Draft','Sent','Paid','Overdue','Cancelled')),
   paid_at timestamptz,
   notes text not null default ''
 );
@@ -69,9 +69,15 @@ create table if not exists activity (
   link text not null default ''
 );
 
+create index if not exists tasks_assignee_idx on tasks (assignee_id);
+create index if not exists tasks_project_idx on tasks (project_id);
+create index if not exists activity_created_idx on activity (created_at desc);
+create index if not exists team_users_email_idx on team_users (email);
+
 -- Lock the tables: no access with the public anon key, only the server's service-role key.
 alter table team_users enable row level security;
 alter table projects enable row level security;
 alter table tasks enable row level security;
 alter table invoices enable row level security;
 alter table activity enable row level security;
+revoke all on team_users, projects, tasks, invoices, activity from anon, authenticated;
