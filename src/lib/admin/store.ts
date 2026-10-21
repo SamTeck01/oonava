@@ -1,7 +1,7 @@
 import "server-only";
 import { airtableEnabled, createLead as atCreate, getLead as atGet, listLeads as atList, updateLead as atUpdate, type LeadRecord, type LeadStatus } from "@/lib/automation/airtable";
 import { tiers } from "@/lib/content";
-import { demoLeads } from "./demo";
+import { demoLeads, demoProspects } from "./demo";
 
 export type Lead = {
   id: string;
@@ -27,6 +27,7 @@ export type Lead = {
   monthlyValue: number;
   nextAction: string;
   created: string;
+  assignedTo: string;
 };
 
 export const isDemo = () => !airtableEnabled();
@@ -40,7 +41,7 @@ function fromRecord(r: { id: string; fields: LeadRecord; createdTime?: string })
     replySent: f["Reply Sent"] ?? "", status: f.Status ?? "New", followUps: f["Follow-ups Sent"] ?? 0,
     firstContacted: f["First Contacted"] ?? "", lastContacted: f["Last Contacted"] ?? "", notes: f.Notes ?? "",
     activity: f.Activity ?? "", dealValue: f["Deal Value"] ?? 0, monthlyValue: f["Monthly Value"] ?? 0,
-    nextAction: f["Next Action"] ?? "", created: f.Created ?? r.createdTime ?? "",
+    nextAction: f["Next Action"] ?? "", created: f.Created ?? r.createdTime ?? "", assignedTo: f["Assigned To"] ?? "",
   };
 }
 
@@ -48,7 +49,7 @@ const FIELD: Partial<Record<keyof Lead, keyof LeadRecord>> = {
   name: "Name", email: "Email", company: "Company", phone: "Phone", message: "Message", source: "Source",
   summary: "Summary", industry: "Industry", tier: "Recommended Tier", score: "Score", status: "Status",
   notes: "Notes", activity: "Activity", dealValue: "Deal Value", monthlyValue: "Monthly Value",
-  nextAction: "Next Action", lastContacted: "Last Contacted", firstContacted: "First Contacted",
+  nextAction: "Next Action", lastContacted: "Last Contacted", firstContacted: "First Contacted", assignedTo: "Assigned To", followUps: "Follow-ups Sent",
 };
 
 function toRecord(patch: Partial<Lead>): Partial<LeadRecord> {
@@ -62,7 +63,10 @@ function toRecord(patch: Partial<Lead>): Partial<LeadRecord> {
 
 // In-memory sample data until Airtable is connected (resets on redeploy).
 const g = globalThis as unknown as { __oonavaDemo?: Lead[] };
-const demo = () => (g.__oonavaDemo ??= demoLeads());
+const demo = () => (g.__oonavaDemo ??= [
+  ...demoLeads(),
+  ...demoProspects().map((p, i) => ({ ...blank(), ...p, id: `demo_p${i}`, created: new Date(Date.now() - (i + 1) * 3_600_000).toISOString(), activity: "" }) as Lead),
+]);
 
 export async function listLeads(): Promise<Lead[]> {
   const rows = isDemo() ? [...demo()] : (await atList()).map(fromRecord);
@@ -100,7 +104,7 @@ export async function logActivity(lead: Lead, text: string) {
 }
 
 export function blank(): Lead {
-  return { id: "", name: "", email: "", company: "", phone: "", message: "", source: "Manual", summary: "", industry: "", tier: "", score: "", scoreReason: "", replySent: "", status: "New", followUps: 0, firstContacted: "", lastContacted: "", notes: "", activity: "", dealValue: 0, monthlyValue: 0, nextAction: "", created: "" };
+  return { id: "", name: "", email: "", company: "", phone: "", message: "", source: "Manual", summary: "", industry: "", tier: "", score: "", scoreReason: "", replySent: "", status: "New", followUps: 0, firstContacted: "", lastContacted: "", notes: "", activity: "", dealValue: 0, monthlyValue: 0, nextAction: "", created: "", assignedTo: "" };
 }
 
 // Value used for pipeline maths: the agreed deal value, otherwise the recommended package's setup fee.

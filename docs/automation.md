@@ -41,6 +41,7 @@ Create a base (e.g. **Oonava CRM**) with a table named **Leads**. Field names mu
 | Deal Value | Number / currency, € (admin dashboard) |
 | Monthly Value | Number / currency, € (admin dashboard) |
 | Next Action | Date (admin dashboard) |
+| Assigned To | Email (admin dashboard: the team member's login email) |
 
 Then create a **personal access token** (airtable.com/create/tokens) with scopes `data.records:read` and `data.records:write`, limited to this base. Send the token and the base ID (starts with `app…`, from the base URL) securely; don't use WhatsApp or email in plain text.
 
@@ -57,7 +58,8 @@ Set these in Vercel → Project → Settings → Environment Variables (see `.en
 | `AIRTABLE_TOKEN`, `AIRTABLE_BASE_ID` | From Delight |
 | `WHATSAPP_ALERTS` | Each person who wants alerts follows the WhatsApp setup at callmebot.com on their own phone and gets their own API key. Add everyone as `phone:apikey` pairs separated by commas, e.g. `+447700900123:123456,+2348012345678:654321`. CallMeBot can't post to WhatsApp groups. |
 | `NEXT_PUBLIC_CALENDLY_URL` | Your Calendly event link |
-| `ADMIN_PASSWORD` | Password for the admin dashboard at oonava.com/admin (at least 8 characters; make it long and share it only via a password manager) |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Owner "master key" login for oonava.com/admin (e.g. `samad@oonava.com` + a long password). Works even before any team member exists. |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Optional. If set, team data (people, projects, tasks, invoices, activity) is stored in Supabase instead of Airtable. Run `docs/supabase.sql` first. |
 | `AUTOMATION_SECRET`, `CRON_SECRET` | Any long random strings (e.g. `openssl rand -hex 32`) |
 | `CALENDLY_WEBHOOK_SIGNING_KEY` | Calendly webhook subscription (needs a paid Calendly plan); point it to `https://oonava.com/api/webhooks/calendly` for `invitee.created` |
 
@@ -71,11 +73,47 @@ After changing variables, redeploy. The follow-up job is defined in `vercel.json
 
 ## Admin dashboard (oonava.com/admin)
 
-Password-protected (`ADMIN_PASSWORD`). Until Airtable is connected it shows sample data.
+A team workspace. Everyone has their own login (e.g. `samad@oonava.com`). These are usernames only, so no mailbox is needed. Admins set and reset passwords on the Team page.
 
-- **Today:** what to do now (reply to new leads, respond to replies, prepare for calls, chase proposals), key numbers and the pipeline.
-- **Pipeline:** every lead, searchable and filterable, as a list or board; change the stage from the list.
-- **Lead page:** AI summary, call/WhatsApp/email shortcuts, an AI email writer (reply, follow-up, book a call, after the call, cold outreach, win back) that sends from hello@oonava.com, notes, activity log, deal values, next action date, mark as won.
-- **Proposals:** AI-written proposal from the chosen package and prices, editable, saved as PDF from the browser; "Mark as sent" moves the lead to the Proposal stage.
-- **Add leads:** add one lead or import a CSV (name, email, company, phone, industry, website, city, notes; up to 500 rows).
-- **Clients:** won deals, monthly and yearly recurring revenue.
+### Access
+Each person gets permission switches, changeable any time on **Team**:
+
+| Permission | Gives access to |
+|---|---|
+| Admin | Everything, including the Team page (core team: Kelly, Samad, Delight) |
+| Sales | Leads, pipeline, proposals, mark as won, clients |
+| Outreach | Outreach desk: call list, scripts, one-click outcomes, AI emails |
+| Delivery | Projects, checklists, tool links |
+| Finance | Invoices, payments, revenue numbers |
+| Marketing | Lead imports, assigning leads |
+
+Everyone gets **Today** (their own to-do list and team activity), **Tasks** and **My account**.
+
+### Sections
+- **Today:** my tasks, leads to act on, outreach queue, my projects, overdue invoices, team activity.
+- **Outreach:** prospects to call (imported or assigned), call/WhatsApp/email, scripts, outcomes (No answer, Voicemail, Call back, Interested, Booked a call, Not interested, Wrong contact). Outcomes update the lead, schedule retries and log activity.
+- **Pipeline / Lead page:** search, filters, list or board, stage changes, assignment, AI emails, notes, tasks, activity, deal values, mark as won.
+- **Proposals:** AI-written, editable, save as PDF, mark as sent.
+- **Add leads:** one lead or CSV import (up to 500), with assignment.
+- **Projects:** created automatically when a deal is won, with a standard checklist; stage board, owner, due date, tool links, notes.
+- **Tasks:** for anyone, linked to a project or lead.
+- **Clients:** won deals and recurring revenue.
+- **Invoices:** track setup/monthly/extra invoices, Draft → Sent → Paid / Overdue.
+- **Team:** add people, switch permissions, deactivate, reset passwords.
+
+### Where team data is stored
+1. **Supabase** if `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` are set (recommended: fast, no record limits). Run `docs/supabase.sql`.
+2. Otherwise **Airtable**, in the same base as Leads, in these tables (names exact):
+
+| Table | Fields (exact names and types) |
+|---|---|
+| **Team** | `name` (single line text, primary), `email` (email), `title` (single line text), `permissions` (multiple select: admin, sales, outreach, delivery, finance, marketing), `password_hash` (long text), `active` (checkbox), `last_login` (date with time) |
+| **Projects** | `name` (primary), `client`, `lead_id`, `package`, `stage` (single select: Onboarding, Building, Testing, Live, Support, Paused), `owner_id`, `due_date` (date), `setup_fee` (number), `monthly_fee` (number), `links` (long text), `notes` (long text) |
+| **Tasks** | `title` (primary), `details` (long text), `assignee_id`, `due_date` (date), `done` (checkbox), `project_id`, `lead_id`, `created_by` |
+| **Invoices** | `number` (primary), `client`, `project_id`, `kind` (single select: Setup, Monthly, Extra), `amount` (number), `currency` (single select: EUR, GBP), `due_date` (date), `status` (single select: Draft, Sent, Paid, Overdue, Cancelled), `paid_at` (date with time), `notes` (long text) |
+| **Activity** | `action` (primary), `user_id`, `user_name`, `target`, `link` |
+
+Fields without a type listed are single line text. Note: Airtable's free plan allows 1,000 records per base. The activity log and tasks grow quickly, so move team data to Supabase (free) once you're active.
+
+### First login
+Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in Vercel and redeploy. Sign in, open **Team**, add Kelly, Delight and yourself as Admin, and add others with only what they need. Share temporary passwords privately; each person changes theirs under **My account**.

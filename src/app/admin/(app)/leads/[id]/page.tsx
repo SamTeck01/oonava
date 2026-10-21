@@ -1,3 +1,4 @@
+import { requireAny } from "@/lib/admin/auth";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLead, estimatedValue, monthlyFor } from "@/lib/admin/store";
@@ -7,15 +8,22 @@ import { eur, ago } from "@/lib/admin/format";
 import { ScoreBadge, Panel } from "@/components/admin/Badges";
 import StatusSelect from "@/components/admin/StatusSelect";
 import EmailComposer from "@/components/admin/EmailComposer";
+import AssignSelect from "@/components/admin/AssignSelect";
+import { can } from "@/lib/admin/team";
+import { teamMap } from "@/lib/admin/views";
+import { addTask } from "@/lib/admin/work-actions";
 
 export const metadata = { title: "Lead" };
 
 const wa = (phone: string) => `https://wa.me/${phone.replace(/[^\d]/g, "")}`;
 
 export default async function LeadPage({ params }: { params: Promise<{ id: string }> }) {
+  const me = await requireAny(["sales", "outreach", "marketing"]);
   const { id } = await params;
   const l = await getLead(id);
   if (!l) notFound();
+  const team = await teamMap();
+  const sales = can(me, "sales");
   const save = saveDetails.bind(null, l.id);
   const note = addNote.bind(null, l.id);
   const won = markWon.bind(null, l.id);
@@ -31,14 +39,17 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
           <h1 className="flex flex-wrap items-center gap-3 text-3xl font-semibold tracking-tight">{l.name}<ScoreBadge score={l.score} /></h1>
           <p className="mt-1 text-muted">{[l.company, l.industry, l.source, l.created && ago(l.created)].filter(Boolean).join(" · ")}</p>
         </div>
-        <StatusSelect id={l.id} status={l.status} className="!px-4 !py-2 !text-sm" />
+        <div className="flex flex-wrap items-center gap-3">
+          {(sales || can(me, "marketing")) && <AssignSelect id={l.id} value={l.assignedTo} people={team.list.filter((u) => u.active).map((u) => ({ email: u.email, name: u.name }))} />}
+          <StatusSelect id={l.id} status={l.status} className="!px-4 !py-2 !text-sm" />
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
         <a href={`mailto:${l.email}`} className="btn btn-line min-h-11 bg-bg">✉ {l.email}</a>
         {l.phone && <a href={`tel:${l.phone}`} className="btn btn-line min-h-11 bg-bg">📞 Call</a>}
         {l.phone && <a href={wa(l.phone)} target="_blank" rel="noreferrer" className="btn btn-line min-h-11 bg-bg">💬 WhatsApp</a>}
-        <Link href={`/admin/leads/${l.id}/proposal`} className="btn btn-dark min-h-11">📄 Create proposal</Link>
+        {sales && <Link href={`/admin/leads/${l.id}/proposal`} className="btn btn-dark min-h-11">📄 Create proposal</Link>}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
@@ -77,7 +88,19 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
         </div>
 
         <div className="space-y-6">
-          {l.status !== "Won" && (
+          <Panel title="Task for this lead">
+            <form action={addTask} className="space-y-2">
+              <input type="hidden" name="lead_id" value={l.id} />
+              <input name="title" required placeholder="e.g. Send case study before the call" className={input} />
+              <div className="grid grid-cols-2 gap-2">
+                <select name="assignee_id" className={input} aria-label="Assign to"><option value="">Me</option>{team.list.filter((u) => u.active && u.id !== me.id).map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select>
+                <input name="due_date" type="date" className={input} aria-label="Due date" />
+              </div>
+              <button className="btn btn-line w-full">Add task</button>
+            </form>
+          </Panel>
+
+          {sales && l.status !== "Won" && (
             <Panel title="🎉 Mark as won">
               <form action={won} className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
@@ -89,7 +112,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
             </Panel>
           )}
 
-          <Panel title="Details">
+          {sales && <Panel title="Details">
             <form action={save} className="space-y-3">
               <label className="block"><span className={label}>Name</span><input name="name" defaultValue={l.name} className={input} /></label>
               <label className="block"><span className={label}>Email</span><input name="email" type="email" defaultValue={l.email} className={input} /></label>
@@ -108,7 +131,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
               <label className="block"><span className={label}>Next action date</span><input name="nextAction" type="date" defaultValue={l.nextAction?.slice(0, 10)} className={input} /></label>
               <button className="btn btn-dark w-full">Save details</button>
             </form>
-          </Panel>
+          </Panel>}
 
           <Panel title="Timeline">
             <dl className="space-y-2 text-sm">

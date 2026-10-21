@@ -3,15 +3,16 @@
 import { useState, useTransition } from "react";
 import { importCsv } from "@/lib/admin/actions";
 
-export default function ImportCsv() {
+export default function ImportCsv({ people }: { people: { email: string; name: string }[] }) {
   const [text, setText] = useState("");
   const [source, setSource] = useState("Gemini Spark");
+  const [assign, setAssign] = useState("");
   const [result, setResult] = useState<string>("");
   const [busy, start] = useTransition();
 
   const onFile = async (f: File | undefined) => { if (f) setText(await f.text()); };
   const run = () => start(async () => {
-    const r = await importCsv(text, source);
+    const r = await importCsv(text, source, assign);
     setResult(r.error ? r.error : `Imported ${r.added} lead${r.added === 1 ? "" : "s"}${r.skipped ? `, skipped ${r.skipped} (missing or invalid email)` : ""}.`);
     if (!r.error) setText("");
   });
@@ -24,6 +25,9 @@ export default function ImportCsv() {
       <textarea value={text} onChange={(e) => setText(e.target.value)} rows={6} placeholder={"name,email,company,city\nJane Doe,jane@agency.com,Doe Homes,Manchester"} className="w-full rounded-xl border border-line bg-bg p-3 font-mono text-xs" />
       <label className="block"><span className="mb-1 block text-xs font-semibold text-muted">Source</span>
         <select value={source} onChange={(e) => setSource(e.target.value)} className="min-h-11 w-full rounded-xl border border-line bg-bg px-3"><option>Gemini Spark</option><option>LinkedIn</option><option>Event</option><option>Import</option></select>
+      </label>
+      <label className="block"><span className="mb-1 block text-xs font-semibold text-muted">Assign all to</span>
+        <select value={assign} onChange={(e) => setAssign(e.target.value)} className="min-h-11 w-full rounded-xl border border-line bg-bg px-3"><option value="">Nobody (shared outreach queue)</option>{people.map((p) => <option key={p.email} value={p.email}>{p.name}</option>)}</select>
       </label>
       <button type="button" onClick={run} disabled={busy || !text.trim()} className="btn btn-dark w-full">{busy ? "Importing…" : "Import leads"}</button>
       {result && <p className="text-sm">{result}</p>}

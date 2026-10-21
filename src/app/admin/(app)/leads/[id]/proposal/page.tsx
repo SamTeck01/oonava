@@ -1,3 +1,4 @@
+import { requireAny } from "@/lib/admin/auth";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLead } from "@/lib/admin/store";
@@ -7,6 +8,7 @@ import ProposalBuilder from "@/components/admin/ProposalBuilder";
 export const metadata = { title: "Proposal" };
 
 export default async function ProposalPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAny(["sales"]);
   const { id } = await params;
   const l = await getLead(id);
   if (!l) notFound();

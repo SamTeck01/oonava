@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { newLead } from "@/lib/admin/actions";
 
-export default function NewLeadForm({ tiers }: { tiers: string[] }) {
+export default function NewLeadForm({ tiers, people }: { tiers: string[]; people: { email: string; name: string }[] }) {
   const [state, action, pending] = useActionState(async (_: unknown, f: FormData) => newLead(f), null);
   const input = "min-h-11 w-full rounded-xl border border-line bg-bg px-3";
   const label = "mb-1 block text-xs font-semibold text-muted";
@@ -20,6 +20,9 @@ export default function NewLeadForm({ tiers }: { tiers: string[] }) {
           <select name="source" className={input}><option>Manual</option><option>Gemini Spark</option><option>LinkedIn</option><option>Referral</option><option>Event</option><option>Cold call</option></select>
         </label>
       </div>
+      <label className="block"><span className={label}>Assign to</span>
+        <select name="assignedTo" className={input}><option value="">Nobody yet</option>{people.map((p) => <option key={p.email} value={p.email}>{p.name}</option>)}</select>
+      </label>
       <label className="block"><span className={label}>Likely package</span>
         <select name="tier" className={input}><option value="">Not sure yet</option>{tiers.map((t) => <option key={t}>{t}</option>)}</select>
       </label>

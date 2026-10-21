@@ -56,7 +56,7 @@ export default function LeadsBoard({ leads, initialStatus }: { leads: Row[]; ini
                 <Link href={`/admin/leads/${l.id}`} className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2 font-semibold">{l.name}<ScoreBadge score={l.score} />{l.company && <span className="font-normal text-muted">· {l.company}</span>}</span>
                   <span className="block truncate text-sm text-muted">{l.summary}</span>
-                  <span className="mt-1 block text-xs text-muted">{l.source} · {ago(l.created)}{l.tier ? ` · ${l.tier}` : ""}{l.value ? ` · ${eur(l.value)}` : ""}</span>
+                  <span className="mt-1 block text-xs text-muted" suppressHydrationWarning>{l.source} · {ago(l.created)}{l.tier ? ` · ${l.tier}` : ""}{l.value ? ` · ${eur(l.value)}` : ""}</span>
                 </Link>
                 <StatusSelect id={l.id} status={l.status} />
               </li>

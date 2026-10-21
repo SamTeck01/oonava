@@ -13,8 +13,8 @@ const purposes: { id: Purpose; label: string }[] = [
   { id: "win-back", label: "Win back" },
 ];
 
-export default function EmailComposer({ id, name, unsubscribed }: { id: string; name: string; unsubscribed: boolean }) {
-  const [purpose, setPurpose] = useState<Purpose>("follow-up");
+export default function EmailComposer({ id, name, unsubscribed, defaultPurpose = "follow-up" }: { id: string; name: string; unsubscribed: boolean; defaultPurpose?: Purpose }) {
+  const [purpose, setPurpose] = useState<Purpose>(defaultPurpose);
   const [extra, setExtra] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");

@@ -1,3 +1,4 @@
+import { requireAny } from "@/lib/admin/auth";
 import Link from "next/link";
 import { listLeads, estimatedValue, monthlyFor } from "@/lib/admin/store";
 import { eur } from "@/lib/admin/format";
@@ -6,6 +7,7 @@ import { Panel } from "@/components/admin/Badges";
 export const metadata = { title: "Clients" };
 
 export default async function Clients() {
+  await requireAny(["sales", "finance"]);
   const clients = (await listLeads()).filter((l) => l.status === "Won");
   const mrr = clients.reduce((s, l) => s + monthlyFor(l), 0);
   const setup = clients.reduce((s, l) => s + estimatedValue(l), 0);

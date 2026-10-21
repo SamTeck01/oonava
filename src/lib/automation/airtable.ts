@@ -24,6 +24,7 @@ export type LeadRecord = {
   "Monthly Value"?: number;
   "Next Action"?: string;
   Created?: string;
+  "Assigned To"?: string;
 };
 
 export const STATUSES = ["New", "Contacted", "Replied", "Booked", "Proposal", "Won", "Lost", "Unsubscribed"] as const;

@@ -2,7 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requireAdmin, checkPassword, startSession, endSession } from "./auth";
+import { authenticate, startSession, endSession, currentUser, type SessionUser } from "./auth";
+import { can, type Permission } from "./team";
+import { track } from "./log";
+import type { Outcome } from "./constants";
 import { getLead, updateLead, createLead, logActivity, type Lead } from "./store";
 import { draftEmail, draftProposal, type Purpose } from "./ai";
 import { sendEmail, layout } from "@/lib/automation/email";
@@ -17,11 +20,12 @@ export async function login(_: unknown, form: FormData) {
   const now = Date.now();
   const recent = (attempts.get("all") ?? []).filter((t) => now - t < 600_000);
   if (recent.length >= 10) return { error: "Too many attempts. Try again in 10 minutes." };
-  if (!checkPassword(String(form.get("password") ?? ""))) {
+  const u = await authenticate(String(form.get("email") ?? ""), String(form.get("password") ?? ""));
+  if (!u) {
     attempts.set("all", [...recent, now]);
-    return { error: "Wrong password." };
+    return { error: "Wrong email or password." };
   }
-  await startSession();
+  await startSession(u.id);
   redirect("/admin");
 }
 
@@ -33,11 +37,19 @@ export async function logout() {
 const str = (f: FormData, k: string, max = 5000) => String(f.get(k) ?? "").trim().slice(0, max);
 const num = (f: FormData, k: string) => { const n = Number(String(f.get(k) ?? "").replace(/[^\d.]/g, "")); return Number.isFinite(n) ? n : 0; };
 
-async function mustLead(id: string) {
-  await requireAdmin();
+async function anyOf(perms: Permission[]): Promise<SessionUser> {
+  const u = await currentUser();
+  if (!u || !perms.some((p) => can(u, p))) throw new Error("Not allowed");
+  return u;
+}
+
+const LEAD_TEAM: Permission[] = ["sales", "outreach", "marketing"];
+
+async function mustLead(id: string, perms: Permission[] = LEAD_TEAM) {
+  const u = await anyOf(perms);
   const l = await getLead(id);
   if (!l) throw new Error("Lead not found");
-  return l;
+  return { l, u };
 }
 
 function refresh(id?: string) {
@@ -46,15 +58,16 @@ function refresh(id?: string) {
 }
 
 export async function setStatus(id: string, status: LeadStatus) {
-  const l = await mustLead(id);
+  const { l, u } = await mustLead(id, ["sales", "outreach"]);
   if (!STATUSES.includes(status) || status === l.status) return;
   await updateLead(id, { status });
-  await logActivity(l, `Status: ${l.status} → ${status}`);
+  await logActivity(l, `${u.name}: stage ${l.status} → ${status}`);
+  await track(u, `moved to ${status}:`, l.company || l.name, `/admin/leads/${id}`);
   refresh(id);
 }
 
 export async function saveDetails(id: string, form: FormData) {
-  const l = await mustLead(id);
+  const { l, u } = await mustLead(id, ["sales"]);
   const patch: Partial<Lead> = {
     name: str(form, "name", 200) || l.name, email: str(form, "email", 200) || l.email,
     company: str(form, "company", 200), phone: str(form, "phone", 40), industry: str(form, "industry", 100),
@@ -62,26 +75,26 @@ export async function saveDetails(id: string, form: FormData) {
     dealValue: num(form, "dealValue"), monthlyValue: num(form, "monthlyValue"),
   };
   await updateLead(id, patch);
-  await logActivity(l, "Details updated");
+  await logActivity(l, `${u.name}: details updated`);
   refresh(id);
 }
 
 export async function addNote(id: string, form: FormData) {
-  const l = await mustLead(id);
+  const { l, u } = await mustLead(id);
   const note = str(form, "note", 4000);
   if (!note) return;
   await updateLead(id, { notes: l.notes ? `${note}\n\n${l.notes}` : note });
-  await logActivity(l, `Note: ${note.slice(0, 120)}`);
+  await logActivity(l, `${u.name}: note: ${note.slice(0, 120)}`);
   refresh(id);
 }
 
 export async function generateEmail(id: string, purpose: Purpose, extra: string) {
-  const l = await mustLead(id);
+  const { l } = await mustLead(id, ["sales", "outreach"]);
   return draftEmail(l, purpose, extra.slice(0, 1000));
 }
 
 export async function sendLeadEmail(id: string, subject: string, body: string, withBooking: boolean) {
-  const l = await mustLead(id);
+  const { l, u } = await mustLead(id, ["sales", "outreach"]);
   if (!subject.trim() || !body.trim()) return { ok: false, error: "Subject and message are required." };
   if (l.status === "Unsubscribed") return { ok: false, error: "This person unsubscribed. Don't email them." };
   const cta = withBooking && env.calendlyUrl ? { label: "Book a free mapping call", url: env.calendlyUrl } : undefined;
@@ -90,49 +103,56 @@ export async function sendLeadEmail(id: string, subject: string, body: string, w
   if (!ok) return { ok: false, error: "Email failed to send. Check RESEND_API_KEY and the domain in Resend." };
   const now = new Date().toISOString();
   await updateLead(id, { lastContacted: now, firstContacted: l.firstContacted || now, status: l.status === "New" ? "Contacted" : l.status });
-  await logActivity(l, `Email sent: "${subject.slice(0, 80)}"${l.id.startsWith("demo_") ? " (sample data, not really sent)" : ""}`);
+  await logActivity(l, `${u.name}: email sent "${subject.slice(0, 80)}"${l.id.startsWith("demo_") ? " (sample data, not really sent)" : ""}`);
+  await track(u, "emailed", l.company || l.name, `/admin/leads/${id}`);
   refresh(id);
   return { ok: true };
 }
 
 export async function generateProposal(id: string, tier: string, setup: number, monthly: number, extra: string) {
-  const l = await mustLead(id);
+  const { l } = await mustLead(id, ["sales"]);
   return draftProposal(l, tier, setup, monthly, extra.slice(0, 2000));
 }
 
 export async function markProposalSent(id: string, tier: string, setup: number, monthly: number) {
-  const l = await mustLead(id);
+  const { l, u } = await mustLead(id, ["sales"]);
   await updateLead(id, { status: "Proposal", tier, dealValue: setup, monthlyValue: monthly });
-  await logActivity(l, `Proposal sent: ${tier}, €${setup} + €${monthly}/month`);
+  await logActivity(l, `${u.name}: proposal sent: ${tier}, €${setup} + €${monthly}/month`);
+  await track(u, "sent a proposal to", l.company || l.name, `/admin/leads/${id}`);
   refresh(id);
 }
 
 export async function markWon(id: string, form: FormData) {
-  const l = await mustLead(id);
+  const { l, u } = await mustLead(id, ["sales"]);
   const setup = num(form, "dealValue") || l.dealValue;
   const monthly = num(form, "monthlyValue") || l.monthlyValue;
   await updateLead(id, { status: "Won", dealValue: setup, monthlyValue: monthly });
-  await logActivity(l, `Won 🎉 €${setup} setup + €${monthly}/month`);
+  await logActivity(l, `${u.name}: won 🎉 €${setup} setup + €${monthly}/month`);
+  await track(u, "won 🎉", l.company || l.name, `/admin/leads/${id}`);
+  // Start delivery: a project with the standard checklist.
+  const { startProjectFromLead } = await import("./work-actions");
+  await startProjectFromLead(l, u, setup, monthly);
   refresh(id);
 }
 
 export async function newLead(form: FormData) {
-  await requireAdmin();
+  const u = await anyOf(LEAD_TEAM);
   const name = str(form, "name", 200), email = str(form, "email", 200);
   if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Name and a valid email are required." };
   const id = await createLead({
     name, email, company: str(form, "company", 200), phone: str(form, "phone", 40), industry: str(form, "industry", 100),
     source: str(form, "source", 60) || "Manual", message: str(form, "message", 4000), notes: str(form, "notes", 4000),
-    tier: str(form, "tier", 100), status: "New",
+    tier: str(form, "tier", 100), status: "New", assignedTo: str(form, "assignedTo", 200),
   });
   if (!id) return { error: "Could not save the lead. Check the Airtable connection and field names." };
+  await track(u, "added lead", name, `/admin/leads/${id}`);
   refresh();
   redirect(`/admin/leads/${id}`);
 }
 
 // CSV import: header row with name,email and optional company,phone,industry,website,notes,source.
-export async function importCsv(csv: string, source: string) {
-  await requireAdmin();
+export async function importCsv(csv: string, source: string, assignTo = "") {
+  const u = await anyOf(["sales", "outreach", "marketing"]);
   const rows = parseCsv(csv.slice(0, 500_000));
   if (rows.length < 2) return { added: 0, skipped: 0, error: "No rows found. The first line must be the column names." };
   const head = rows[0].map((h) => h.toLowerCase().trim());
@@ -145,9 +165,10 @@ export async function importCsv(csv: string, source: string) {
     const email = get(c.email);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { skipped++; continue; }
     const notes = [get(c.notes), get(c.website) && `Website: ${get(c.website)}`, get(c.city) && `Location: ${get(c.city)}`].filter(Boolean).join("\n");
-    const id = await createLead({ name: get(c.name) || get(c.company) || email, email, company: get(c.company), phone: get(c.phone), industry: get(c.industry), notes, source: source || "Import", status: "New" });
+    const id = await createLead({ name: get(c.name) || get(c.company) || email, email, company: get(c.company), phone: get(c.phone), industry: get(c.industry), notes, source: source || "Import", status: "New", assignedTo: assignTo });
     if (id) added++; else skipped++;
   }
+  if (added) await track(u, `imported ${added} leads from`, source || "CSV", "/admin/leads");
   refresh();
   return { added, skipped };
 }
@@ -173,4 +194,28 @@ function parseCsv(text: string): string[][] {
   row.push(cell);
   if (row.some((x) => x.trim())) rows.push(row);
   return rows;
+}
+
+export async function assignLead(id: string, email: string) {
+  const { l, u } = await mustLead(id, ["sales", "marketing"]);
+  await updateLead(id, { assignedTo: email });
+  await logActivity(l, `${u.name}: assigned to ${email || "nobody"}`);
+  refresh(id);
+}
+
+export async function logOutcome(id: string, outcome: Outcome, note: string, callback: string) {
+  const { l, u } = await mustLead(id, ["outreach", "sales"]);
+  const now = new Date().toISOString();
+  const patch: Partial<Lead> = { lastContacted: now, firstContacted: l.firstContacted || now };
+  if (outcome === "Call back" && callback) patch.nextAction = callback.slice(0, 10);
+  if (outcome === "No answer" || outcome === "Left voicemail") patch.nextAction = new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10);
+  if (outcome === "Interested") { patch.status = "Replied"; patch.score = "Hot"; }
+  if (outcome === "Booked a call") { patch.status = "Booked"; patch.score = "Hot"; patch.nextAction = callback ? callback.slice(0, 10) : l.nextAction; }
+  if (outcome === "Not interested" || outcome === "Wrong contact") { patch.status = "Lost"; patch.nextAction = ""; }
+  if (patch.status === undefined && l.status === "New") patch.status = "Contacted";
+  await updateLead(id, patch);
+  await logActivity(l, `${u.name}: ${outcome}${note ? ` (${note.slice(0, 200)})` : ""}`);
+  await track(u, `logged "${outcome}" with`, l.company || l.name, `/admin/leads/${id}`);
+  refresh(id);
+  revalidatePath("/admin/outreach");
 }
