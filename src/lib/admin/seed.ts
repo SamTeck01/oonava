@@ -7,7 +7,7 @@ export function seed(): Record<string, Row[]> {
   const iso = (d: number) => new Date(now + d * day).toISOString();
   const date = (d: number) => iso(d).slice(0, 10);
   const pw = hashPassword("demo12345");
-  const u = (id: string, name: string, email: string, title: string, permissions: string[], status = "active") => ({ id, name, email, title, permissions, password_hash: pw, status, created_at: iso(-30), last_login: null });
+  const u = (id: string, name: string, email: string, title: string, permissions: string[], status = "active") => ({ id, name, email, personal_email: "", title, permissions, password_hash: pw, status, created_at: iso(-30), last_login: null });
   return {
     team_users: [
       u("u_kelly", "Kelly", "kelly@oonava.com", "Founder", ["admin"]),

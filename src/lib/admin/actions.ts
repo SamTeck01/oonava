@@ -6,6 +6,8 @@ import { authenticate, startSession, endSession, currentUser, demoLoginAllowed, 
 import { can, users, findUserByEmail, bootstrapAdmins, hashPassword, type Permission } from "./team";
 import { supabaseAuthEnabled, createAuthUser } from "./sbauth";
 import { alertTeam } from "@/lib/automation/whatsapp";
+import { notify, notifyAdmins } from "./notify";
+import { allUsers } from "./team";
 import { track } from "./log";
 import type { Outcome } from "./constants";
 import { getLead, updateLead, createLead, logActivity, type Lead } from "./store";
@@ -41,7 +43,10 @@ export async function signup(_: unknown, form: FormData) {
   const recent = (signups.get("all") ?? []).filter((t) => now - t < 3_600_000);
   if (recent.length >= 20) return { error: "Too many sign-ups right now. Try again later." };
   const name = str(form, "name", 120), email = str(form, "email", 200).toLowerCase(), password = String(form.get("password") ?? "");
-  if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Enter your name and a valid email." };
+  const personal = str(form, "personal_email", 200).toLowerCase();
+  if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Enter your name and a valid work email." };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(personal)) return { error: "Enter a valid personal email so we can notify you." };
+  if (personal === email) return { error: "Your personal email must be different from your work email." };
   if (password.length < 10) return { error: "Use a password of at least 10 characters." };
   if (password !== String(form.get("confirm") ?? "")) return { error: "Passwords don't match." };
   if (await findUserByEmail(email)) return { error: "An account with that email already exists." };
@@ -57,9 +62,13 @@ export async function signup(_: unknown, form: FormData) {
     id = `u_${Math.random().toString(36).slice(2, 10)}`;
   } else return { error: "Sign-up isn't available yet." };
 
-  await users.insert({ id, name, email, title: str(form, "title", 120), permissions: admin ? ["admin"] : [], status: admin ? "active" : "pending", password_hash: supabaseAuthEnabled() ? null : hashPassword(password), last_login: null });
+  await users.insert({ id, name, email, personal_email: personal, title: str(form, "title", 120), permissions: admin ? ["admin"] : [], status: admin ? "active" : "pending", password_hash: supabaseAuthEnabled() ? null : hashPassword(password), last_login: null });
   if (admin) return { ok: "You're the first admin. Sign in now." };
-  await alertTeam(`👤 New Oonava account request\n${name} (${email})\nApprove or reject: ${env.siteUrl}/admin/team`);
+  await Promise.all([
+    alertTeam(`👤 New Oonava account request\n${name} (${email})\nApprove or reject: ${env.siteUrl}/admin/team`),
+    notify({ name, personal_email: personal }, "Account request received", `We've received your request for an Oonava team account (${email}). An admin will review it and give you access. You'll get another email here when it's approved.`),
+    notifyAdmins("New account request", `${name} asked for a team account.\n\nWork login: ${email}\nPersonal email: ${personal}${str(form, "title", 120) ? `\nRole: ${str(form, "title", 120)}` : ""}\n\nApprove them and choose what they can access, or reject the request.`, { label: "Review request", path: "/admin/team" }),
+  ]);
   return { ok: "Request sent. An admin will approve your account and give you access. You'll be able to sign in once approved." };
 }
 
@@ -234,6 +243,8 @@ export async function assignLead(id: string, email: string) {
   const { l, u } = await mustLead(id, ["sales", "marketing"]);
   await updateLead(id, { assignedTo: email });
   await logActivity(l, `${u.name}: assigned to ${email || "nobody"}`);
+  const to = email && email !== u.email ? (await allUsers()).find((x) => x.email === email) : null;
+  if (to) await notify(to, `Lead assigned: ${l.company || l.name}`, `${u.name} assigned you a lead: ${l.company || l.name}${l.summary ? `.\n\n${l.summary}` : "."}`, { label: "Open lead", path: `/admin/leads/${id}` });
   refresh(id);
 }
 

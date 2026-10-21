@@ -81,3 +81,4 @@ alter table tasks enable row level security;
 alter table invoices enable row level security;
 alter table activity enable row level security;
 revoke all on team_users, projects, tasks, invoices, activity from anon, authenticated;
+alter table team_users add column if not exists personal_email text not null default '';

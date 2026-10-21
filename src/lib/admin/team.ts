@@ -20,6 +20,7 @@ export type User = Row & {
   title: string;
   permissions: Permission[];
   status: UserStatus;
+  personal_email: string;
   password_hash?: string | null; // only used for sample data; real passwords live in Supabase Auth
   last_login?: string | null;
 };
@@ -44,7 +45,7 @@ export function verifyPassword(pw: string, stored: string) {
 export const can = (u: { permissions: Permission[] } | null | undefined, p: Permission) => !!u && (u.permissions.includes("admin") || u.permissions.includes(p));
 
 // Airtable omits empty fields (unticked checkbox, empty multi-select), so normalise.
-export const normalise = (u: User): User => ({ ...u, permissions: (u.permissions ?? []) as Permission[], status: (u.status ?? "pending") as UserStatus, title: u.title ?? "" });
+export const normalise = (u: User): User => ({ ...u, permissions: (u.permissions ?? []) as Permission[], status: (u.status ?? "pending") as UserStatus, title: u.title ?? "", personal_email: u.personal_email ?? "" });
 
 export async function findUserByEmail(email: string) {
   const rows = await users.where("email", email.toLowerCase().trim());
@@ -60,5 +61,5 @@ export async function allUsers() {
   return (await users.all("name.asc")).map(normalise);
 }
 
-export const publicUser = (u: User) => ({ id: u.id, name: u.name, email: u.email, title: u.title, permissions: u.permissions, status: u.status, active: u.status === "active", last_login: u.last_login ?? null, created_at: u.created_at ?? "" });
+export const publicUser = (u: User) => ({ id: u.id, name: u.name, email: u.email, personal_email: u.personal_email, title: u.title, permissions: u.permissions, status: u.status, active: u.status === "active", last_login: u.last_login ?? null, created_at: u.created_at ?? "" });
 export type PublicUser = ReturnType<typeof publicUser>;

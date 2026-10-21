@@ -12,7 +12,8 @@ export default function InviteForm() {
       <h2 className="font-semibold">Add a team member</h2>
       <div className="grid gap-3 md:grid-cols-2">
         <input name="name" required placeholder="Full name *" className={input} />
-        <input name="email" type="email" required placeholder="Work email *" className={input} />
+        <input name="email" type="email" required placeholder="Work login, e.g. name@oonava.com *" className={input} />
+        <input name="personal_email" type="email" placeholder="Personal email (for notifications)" className={input} />
         <input name="title" placeholder="Role title, e.g. Sales" className={input} />
         <input name="password" type="text" required minLength={10} placeholder="Temporary password (10+) *" className={input} autoComplete="off" />
       </div>

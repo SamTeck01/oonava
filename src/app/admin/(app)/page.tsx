@@ -7,6 +7,7 @@ import { taskViews, myOpenTasks } from "@/lib/admin/views";
 import { eur, ago, OPEN } from "@/lib/admin/format";
 import { ScoreBadge, Panel, SampleTag } from "@/components/admin/Badges";
 import { teamDbEnabled } from "@/lib/admin/db";
+import { getUser } from "@/lib/admin/team";
 import TaskList from "@/components/admin/TaskList";
 
 export const metadata = { title: "Today" };
@@ -46,9 +47,11 @@ export default async function Today({ searchParams }: { searchParams: Promise<{ 
   const open = leads.filter((l) => OPEN.includes(l.status));
   const won = leads.filter((l) => l.status === "Won");
   const hour = new Date().getHours();
+  const profile = await getUser(me.id);
 
   return (
     <div className="space-y-6">
+      {profile && !profile.personal_email && <Link href="/admin/account" className="block rounded-xl bg-[#fff2d6] p-3 text-sm text-[#7a4b00]">Add your <b>personal email</b> under My account so you get approvals, tasks and alerts →</Link>}
       {denied && <p className="rounded-xl bg-[#fff2d6] p-3 text-sm text-[#7a4b00]">You don&apos;t have access to that page. Ask an admin if you need it.</p>}
       <div>
         <p className="text-sm text-muted">{new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}</p>

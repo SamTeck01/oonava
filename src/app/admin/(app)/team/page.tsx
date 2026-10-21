@@ -30,6 +30,7 @@ export default async function Team() {
             {pending.map((u) => (
               <div key={u.id} className="rounded-2xl border border-line p-4">
                 <p className="font-semibold">{u.name} <span className="font-normal text-muted">· {u.email}</span> <SampleTag show={!teamDbEnabled()} /></p>
+                <p className="text-xs text-muted">Personal email: {u.personal_email || "not given"}</p>
                 <p className="text-xs text-muted">Requested {ago(String(u.created_at ?? ""))}{u.title ? ` · says: ${u.title}` : ""}</p>
                 <form action={approveUser.bind(null, u.id)} className="mt-3 space-y-3">
                   <input name="title" defaultValue={u.title} placeholder="Role title, e.g. Sales" className={input} />
@@ -54,12 +55,13 @@ export default async function Team() {
       <div className="grid gap-4 lg:grid-cols-2">
         {team.map((u) => (
           <Panel key={u.id} title={`${u.name}${teamDbEnabled() ? "" : "  (sample)"}`} action={<span className={`rounded-full px-3 py-1 text-xs font-semibold ${u.status === "active" ? "bg-[#e3f6e8] text-[#146c2e]" : "bg-surface text-muted"}`}>{u.status === "active" ? "Active" : "Off"}</span>}>
-            <p className="-mt-2 mb-4 text-sm text-muted">{u.email}{u.last_login ? ` · last in ${ago(String(u.last_login))}` : " · never signed in"}</p>
+            <p className="-mt-2 mb-4 text-sm text-muted">Login: {u.email}{u.last_login ? ` · last in ${ago(String(u.last_login))}` : " · never signed in"}</p>
             <form action={updateUser.bind(null, u.id)} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <input name="name" defaultValue={u.name} className={input} aria-label="Name" />
                 <input name="title" defaultValue={u.title} placeholder="Role title" className={input} aria-label="Role title" />
               </div>
+              <input name="personal_email" type="email" defaultValue={u.personal_email} placeholder="Personal email (notifications)" className={input} aria-label="Personal email" />
               <div className="grid gap-2 sm:grid-cols-2">
                 {PERMISSION_LIST.map((p) => (
                   <label key={p.id} className="flex items-start gap-2 rounded-xl border border-line p-2.5 text-sm">

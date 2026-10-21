@@ -9,7 +9,14 @@ export default function SignupForm() {
   return (
     <form action={action} className="mt-8 space-y-4">
       <input className="field" name="name" placeholder="Full name" autoComplete="name" required />
-      <input className="field" type="email" name="email" placeholder="Work email, e.g. you@oonava.com" autoComplete="username" required />
+      <label className="block">
+        <input className="field" type="email" name="email" placeholder="Work email, e.g. you@oonava.com" autoComplete="username" required />
+        <span className="mt-1 block text-xs text-muted">You&apos;ll sign in with this.</span>
+      </label>
+      <label className="block">
+        <input className="field" type="email" name="personal_email" placeholder="Personal email, e.g. you@gmail.com" autoComplete="email" required />
+        <span className="mt-1 block text-xs text-muted">We send approvals, tasks and alerts here.</span>
+      </label>
       <input className="field" name="title" placeholder="Your role (optional)" />
       <input className="field" type="password" name="password" placeholder="Password (10+ characters)" autoComplete="new-password" minLength={10} required />
       <input className="field" type="password" name="confirm" placeholder="Repeat password" autoComplete="new-password" minLength={10} required />

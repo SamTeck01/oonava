@@ -7,6 +7,7 @@ import { users, getUser, allUsers, hashPassword, can, type Permission } from "./
 import { supabaseAuthEnabled, createAuthUser, setAuthPassword, deleteAuthUser } from "./sbauth";
 import { projects, tasks, invoices, PROJECT_STAGES, INVOICE_STATUS, DEFAULT_CHECKLIST, type Project, type Invoice } from "./work";
 import { track } from "./log";
+import { notify } from "./notify";
 import type { Lead } from "./store";
 
 const str = (f: FormData, k: string, max = 5000) => String(f.get(k) ?? "").trim().slice(0, max);
@@ -52,8 +53,11 @@ export async function addTask(form: FormData) {
   const u = await assertPerm();
   const title = str(form, "title", 300);
   if (!title) return;
-  await tasks.insert({ title, details: str(form, "details", 4000), assignee_id: str(form, "assignee_id") || u.id, due_date: dateOrNull(str(form, "due_date", 10)), done: false, project_id: str(form, "project_id") || null, lead_id: str(form, "lead_id") || null, created_by: u.id });
+  const assignee = str(form, "assignee_id") || u.id;
+  const due = dateOrNull(str(form, "due_date", 10));
+  await tasks.insert({ title, details: str(form, "details", 4000), assignee_id: assignee, due_date: due, done: false, project_id: str(form, "project_id") || null, lead_id: str(form, "lead_id") || null, created_by: u.id });
   await track(u, "added task", title, "/admin/tasks");
+  if (assignee !== u.id) await notify(await getUser(assignee), `New task: ${title}`, `${u.name} gave you a task: "${title}"${due ? `, due ${due}` : ""}.`, { label: "Open my tasks", path: "/admin/tasks" });
   done("/admin/tasks");
 }
 
@@ -120,6 +124,7 @@ export async function approveUser(id: string, form: FormData) {
   const permissions = permsFrom(form);
   await users.update(id, { status: "active", permissions, title: str(form, "title", 120) || target.title });
   await track(u, `approved ${target.name} as ${permissions.join(", ") || "no access"}:`, target.email, "/admin/team");
+  await notify(target, "Your account is approved", `Good news: ${u.name} approved your Oonava team account.\n\nSign in with your work login: ${target.email} and the password you chose.\n\nYou have access to: ${permissions.join(", ") || "your tasks"}.`, { label: "Sign in", path: "/admin/login" });
   done("/admin/team");
 }
 
@@ -127,6 +132,7 @@ export async function rejectUser(id: string) {
   const u = await assertPerm("admin");
   const target = await getUser(id);
   if (!target || target.status !== "pending") return;
+  await notify(target, "About your account request", "Your request for an Oonava team account wasn't approved. If you think this is a mistake, contact the person who invited you.");
   if (supabaseAuthEnabled()) await deleteAuthUser(id);
   await users.remove(id);
   await track(u, "rejected the account request from", target.email, "/admin/team");
@@ -146,8 +152,10 @@ export async function inviteUser(_: unknown, form: FormData) {
     if (!r.id) return { error: r.error };
     id = r.id;
   }
-  await users.insert({ ...(id ? { id } : {}), name: str(form, "name", 120), email, title: str(form, "title", 120), permissions: permsFrom(form), status: "active", password_hash: supabaseAuthEnabled() ? null : hashPassword(password), last_login: null });
+  const personal = str(form, "personal_email", 200).toLowerCase();
+  await users.insert({ ...(id ? { id } : {}), name: str(form, "name", 120), email, personal_email: personal, title: str(form, "title", 120), permissions: permsFrom(form), status: "active", password_hash: supabaseAuthEnabled() ? null : hashPassword(password), last_login: null });
   await track(u, "added team member", str(form, "name", 120), "/admin/team");
+  if (personal) await notify({ name: str(form, "name", 120), personal_email: personal }, "Your Oonava team account", `${u.name} created a team account for you.\n\nWork login: ${email}\nYour temporary password will be shared with you directly. Change it under My account after you sign in.`, { label: "Sign in", path: "/admin/login" });
   done("/admin/team");
   return { ok: `Added. Send ${email} their temporary password privately and ask them to change it under My account.` };
 }
@@ -160,7 +168,7 @@ export async function updateUser(id: string, form: FormData) {
   const status = form.get("active") === "on" ? "active" : "disabled";
   const losingAdmin = target.permissions.includes("admin") && (!permissions.includes("admin") || status !== "active");
   if (losingAdmin && (await activeAdmins()).length <= 1) throw new Error("Keep at least one active admin.");
-  await users.update(id, { name: str(form, "name", 120) || target.name, title: str(form, "title", 120), permissions, status });
+  await users.update(id, { name: str(form, "name", 120) || target.name, title: str(form, "title", 120), personal_email: str(form, "personal_email", 200).toLowerCase() || target.personal_email, permissions, status });
   await track(u, status === "active" ? "updated access for" : "switched off", target.name, "/admin/team");
   done("/admin/team");
 }
@@ -171,7 +179,9 @@ export async function resetPassword(id: string, form: FormData) {
   if (pw.length < 10) return;
   if (supabaseAuthEnabled()) { if (!(await setAuthPassword(id, pw))) throw new Error("Could not reset the password."); }
   else await users.update(id, { password_hash: hashPassword(pw) });
-  await track(u, "reset the password of", (await getUser(id))?.name ?? "a user", "/admin/team");
+  const target = await getUser(id);
+  await track(u, "reset the password of", target?.name ?? "a user", "/admin/team");
+  await notify(target, "Your password was reset", `${u.name} reset your Oonava dashboard password. They'll give you the new temporary password directly. Change it under My account after signing in. If you didn't expect this, tell an admin.`);
   done("/admin/team");
 }
 
@@ -203,4 +213,15 @@ export async function testConnection(id: "airtable" | "resend"): Promise<{ ok: b
   const { sendEmail } = await import("@/lib/automation/email");
   const ok = await sendEmail({ to: env.teamEmail, subject: "Oonava dashboard: email test", text: `Test email sent by ${u.name} from the Connections page. If you got this, email sending works.` });
   return ok ? { ok: true, text: `Test email sent to ${env.teamEmail}. Check the inbox (and spam).` } : { ok: false, text: "Sending failed. Check RESEND_API_KEY and that oonava.com is verified in Resend." };
+}
+
+export async function updateMyProfile(_: unknown, form: FormData) {
+  const u = await currentUser();
+  if (!u) return { error: "Not signed in." };
+  const personal = str(form, "personal_email", 200).toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(personal)) return { error: "Enter a valid personal email." };
+  if (personal === u.email) return { error: "Use a personal address, not your work login." };
+  await users.update(u.id, { personal_email: personal, name: str(form, "name", 120) || u.name });
+  done("/admin/account");
+  return { ok: "Saved. Notifications will go to " + personal + "." };
 }
