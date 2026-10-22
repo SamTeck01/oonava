@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/admin/auth";
 import { can, allUsers } from "@/lib/admin/team";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { PERMISSION_LIST } from "@/lib/admin/constants";
 import { updateUser, resetPassword, approveUser, rejectUser } from "@/lib/admin/work-actions";
 import { ago } from "@/lib/admin/format";
@@ -21,7 +22,7 @@ export default async function Team() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Team</h1>
-        <p className="text-sm text-muted">People request an account at <b>oonava.com/admin/signup</b>. Approve them here and switch on what they can do. Changes apply immediately; switching someone off removes their access at once.</p>
+        <p className="text-sm text-muted">People request an account at <b>oonava.com/admin/signup</b>. Approve them here and switch on what they can do. Changes apply immediately; switching someone off removes their access at once. <Link href="/admin/team/emails" className="font-semibold text-fg underline">Email setup (Supabase templates) →</Link></p>
       </div>
       {pending.length > 0 && (
         <section className="rounded-[20px] border-2 border-accent-strong bg-bg p-5 md:p-6">
