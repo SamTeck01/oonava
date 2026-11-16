@@ -13,6 +13,11 @@ export async function GET(req: Request) {
   if ((prod && !env.cronSecret) || (env.cronSecret && req.headers.get("authorization") !== `Bearer ${env.cronSecret}`)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  // Keep the free Supabase project awake (it pauses after ~7 days without traffic).
+  if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    await fetch(`${process.env.SUPABASE_URL}/rest/v1/team_users?select=id&limit=1`, { headers: { apikey: key, Authorization: `Bearer ${key}` } }).catch(() => {});
+  }
   const leads = await findLeads(`AND({Status}='Contacted', {Follow-ups Sent} < ${sequence.length})`);
   let sent = 0;
   for (const { id, fields } of leads) {
