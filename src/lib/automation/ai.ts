@@ -88,3 +88,29 @@ export async function generateJson<T>(system: string, prompt: string, schema: ob
     return { ...fallback, aiUsed: false };
   }
 }
+
+// Reads a lead list from a PDF (or other document) and returns it as CSV text.
+export async function documentToCsv(base64: string, mimeType: string): Promise<string | null> {
+  if (!env.geminiKey) return null;
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${env.geminiModel}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": env.geminiKey },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [
+          { inlineData: { mimeType, data: base64 } },
+          { text: "Extract every person or business contact in this document. Output ONLY CSV, no code fences, with this header row: name,email,company,phone,industry,website,city,notes. Quote fields containing commas. Leave unknown fields empty. Never invent emails." },
+        ] }],
+        generationConfig: { temperature: 0 },
+      }),
+      signal: AbortSignal.timeout(60000),
+    });
+    if (!res.ok) throw new Error(`Gemini ${res.status}`);
+    const data = await res.json();
+    const text: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    return text.replace(/^```[a-z]*\n?|```\s*$/gim, "").trim() || null;
+  } catch (e) {
+    console.error("[ai:document]", e);
+    return null;
+  }
+}

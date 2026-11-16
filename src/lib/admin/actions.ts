@@ -194,6 +194,14 @@ export async function newLead(form: FormData) {
 }
 
 // CSV import: header row with name,email and optional company,phone,industry,website,notes,source.
+export async function pdfToCsv(base64: string, mimeType: string) {
+  await anyOf(["sales", "outreach", "marketing"]);
+  if (base64.length > 14_000_000) return { error: "File is too big. Keep it under 10 MB." };
+  const { documentToCsv } = await import("@/lib/automation/ai");
+  const csv = await documentToCsv(base64, mimeType || "application/pdf");
+  return csv ? { csv } : { error: "Couldn't read leads from that file. Check the Gemini key, or export the list as CSV." };
+}
+
 export async function importCsv(csv: string, source: string, assignTo = "") {
   const u = await anyOf(["sales", "outreach", "marketing"]);
   const rows = parseCsv(csv.slice(0, 500_000));

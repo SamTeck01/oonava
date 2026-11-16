@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { importCsv } from "@/lib/admin/actions";
+import { importCsv, pdfToCsv } from "@/lib/admin/actions";
 
 export default function ImportCsv({ people }: { people: { email: string; name: string }[] }) {
   const [text, setText] = useState("");
@@ -10,7 +10,18 @@ export default function ImportCsv({ people }: { people: { email: string; name: s
   const [result, setResult] = useState<string>("");
   const [busy, start] = useTransition();
 
-  const onFile = async (f: File | undefined) => { if (f) setText(await f.text()); };
+  const onFile = (f: File | undefined) => {
+    if (!f) return;
+    if (!/pdf$/i.test(f.type) && !/\.pdf$/i.test(f.name)) { f.text().then(setText); return; }
+    setResult("Reading the PDF…");
+    start(async () => {
+      const buf = new Uint8Array(await f.arrayBuffer());
+      let bin = "";
+      for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+      const r = await pdfToCsv(btoa(bin), f.type || "application/pdf");
+      if (r.csv) { setText(r.csv); setResult("Leads read from the PDF. Check them below, then import."); } else setResult(r.error ?? "Couldn't read that file.");
+    });
+  };
   const run = () => start(async () => {
     const r = await importCsv(text, source, assign);
     setResult(r.error ? r.error : `Imported ${r.added} lead${r.added === 1 ? "" : "s"}${r.skipped ? `, skipped ${r.skipped} (missing or invalid email)` : ""}.`);
@@ -19,9 +30,9 @@ export default function ImportCsv({ people }: { people: { email: string; name: s
 
   return (
     <section className="space-y-3 rounded-[20px] border border-line bg-bg p-5 md:p-6">
-      <h2 className="font-semibold">Import a list (CSV)</h2>
-      <p className="text-sm text-muted">Export your Google Sheet as CSV. The first row must be column names. We look for <b>name, email</b> and optionally <b>company, phone, industry, website, city, notes</b>. Up to 500 rows at a time.</p>
-      <input type="file" accept=".csv,text/csv" onChange={(e) => onFile(e.target.files?.[0])} className="block w-full text-sm file:mr-3 file:rounded-full file:border-0 file:bg-fg file:px-4 file:py-2 file:text-bg" />
+      <h2 className="font-semibold">Import a list (CSV or PDF)</h2>
+      <p className="text-sm text-muted">Upload a CSV, or a PDF list (AI reads it into rows you can check first). The first row must be column names. We look for <b>name, email</b> and optionally <b>company, phone, industry, website, city, notes</b>. Up to 500 rows at a time.</p>
+      <input type="file" accept=".csv,text/csv,.pdf,application/pdf" onChange={(e) => onFile(e.target.files?.[0])} className="block w-full text-sm file:mr-3 file:rounded-full file:border-0 file:bg-fg file:px-4 file:py-2 file:text-bg" />
       <textarea value={text} onChange={(e) => setText(e.target.value)} rows={6} placeholder={"name,email,company,city\nJane Doe,jane@agency.com,Doe Homes,Manchester"} className="w-full rounded-xl border border-line bg-bg p-3 font-mono text-xs" />
       <label className="block"><span className="mb-1 block text-xs font-semibold text-muted">Source</span>
         <select value={source} onChange={(e) => setSource(e.target.value)} className="min-h-11 w-full rounded-xl border border-line bg-bg px-3"><option>Gemini Spark</option><option>LinkedIn</option><option>Event</option><option>Import</option></select>
