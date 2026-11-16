@@ -15,10 +15,9 @@ export default function ImportCsv({ people }: { people: { email: string; name: s
     if (!/pdf$/i.test(f.type) && !/\.pdf$/i.test(f.name)) { f.text().then(setText); return; }
     setResult("Reading the PDF…");
     start(async () => {
-      const buf = new Uint8Array(await f.arrayBuffer());
-      let bin = "";
-      for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
-      const r = await pdfToCsv(btoa(bin), f.type || "application/pdf");
+      const fd = new FormData();
+      fd.append("file", f);
+      const r = await pdfToCsv(fd);
       if (r.csv) { setText(r.csv); setResult("Leads read from the PDF. Check them below, then import."); } else setResult(r.error ?? "Couldn't read that file.");
     });
   };
