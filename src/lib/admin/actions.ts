@@ -1,5 +1,7 @@
 "use server";
 
+import type { Proposal } from "@/lib/admin/ai";
+
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { authenticate, startSession, endSession, currentUser, demoLoginAllowed, type SessionUser } from "./auth";
@@ -155,6 +157,33 @@ export async function sendLeadEmail(id: string, subject: string, body: string, w
 export async function generateProposal(id: string, tier: string, setup: number, monthly: number, extra: string) {
   const { l } = await mustLead(id, ["sales"]);
   return draftProposal(l, tier, setup, monthly, extra.slice(0, 2000));
+}
+
+export async function sendProposal(id: string, p: Proposal, tier: string, setup: number, monthly: number, note: string) {
+  const { l, u } = await mustLead(id, ["sales"]);
+  if (l.status === "Unsubscribed") return { ok: false, error: "This person unsubscribed. Don't email them." };
+  const eur = (n: number) => "€" + Math.round(n || 0).toLocaleString("en-GB");
+  const sections = [
+    note.trim(),
+    `${p.title}\n${p.summary}`,
+    `THE CHALLENGE\n${p.challenge}`,
+    `OUR SOLUTION\n${p.solution}`,
+    `WHAT YOU GET\n${p.deliverables.map((d) => `• ${d}`).join("\n")}`,
+    `TIMELINE\n${p.timeline.map((t) => `• ${t.phase} (${t.duration}): ${t.detail}`).join("\n")}`,
+    `INVESTMENT\nOne-off setup: ${eur(setup)}\nMonthly support & maintenance: ${eur(monthly)}/month\nPackage: ${p.packageName}. Prices exclude VAT and third-party subscriptions. Valid for 30 days.`,
+    `NEXT STEPS\n${p.nextSteps.map((s, i) => `${i + 1}. ${s}`).join("\n")}`,
+  ].filter(Boolean).join("\n\n");
+  const cta = env.calendlyUrl ? { label: "Book a call to go through it", url: env.calendlyUrl } : undefined;
+  const mail = layout({ name: l.name, body: sections.slice(0, 12000), cta, preheader: p.summary.slice(0, 120), signature: { name: u.name.split(" ")[0], title: u.title || "Oonava" } });
+  const subject = `Proposal: ${p.title}`.slice(0, 200);
+  const ok = l.id.startsWith("demo_") ? true : await sendEmail({ to: l.email, subject, ...mail });
+  if (!ok) return { ok: false, error: "Email failed to send. Check RESEND_API_KEY and the domain in Resend." };
+  const now = new Date().toISOString();
+  await updateLead(id, { status: "Proposal", tier, dealValue: setup, monthlyValue: monthly, lastContacted: now, firstContacted: l.firstContacted || now });
+  await logActivity(l, `${u.name}: proposal emailed to ${l.email}: ${tier}, €${setup} + €${monthly}/month`);
+  await track(u, "emailed a proposal to", l.company || l.name, `/admin/leads/${id}`);
+  refresh(id);
+  return { ok: true };
 }
 
 export async function markProposalSent(id: string, tier: string, setup: number, monthly: number) {

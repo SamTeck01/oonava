@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { generateProposal, markProposalSent } from "@/lib/admin/actions";
+import { generateProposal, markProposalSent, sendProposal } from "@/lib/admin/actions";
 import type { Proposal } from "@/lib/admin/ai";
 
 const eur = (n: number) => "€" + Math.round(n || 0).toLocaleString("en-GB");
@@ -20,6 +20,28 @@ export default function ProposalBuilder({ id, client, tiers, initial }: {
   const [note, setNote] = useState("");
   const [busy, start] = useTransition();
   const [saving, startSave] = useTransition();
+  const [sending, startSend] = useTransition();
+  const [message, setMessage] = useState("");
+
+  // Print the proposal alone in a fresh window, so dashboard layout can't clip or hide it.
+  const download = () => {
+    const el = document.getElementById("proposal");
+    const w = window.open("", "_blank");
+    if (!el || !w) { window.print(); return; }
+    const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style')).map((n) => n.outerHTML).join("");
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Proposal - ${client.company || client.name}</title>${styles}<style>body{background:#fff;color:#03030f;margin:0}@page{margin:16mm}</style></head><body>${el.outerHTML.replace(/contenteditable="true"/g, "")}</body></html>`);
+    w.document.close();
+    let done = false;
+    const go = () => { if (done) return; done = true; w.focus(); w.print(); };
+    w.onload = go;
+    setTimeout(go, 1500);
+  };
+  const send = () => p && startSend(async () => {
+    const r = await sendProposal(id, p, tier, setup, monthly, message);
+    setNote(r.ok ? `Proposal emailed to ${client.email}. Lead moved to Proposal stage.` : r.error ?? "Couldn't send.");
+  });
+  const setList = (k: "deliverables" | "nextSteps", i: number, v: string) => setP((x) => (x ? { ...x, [k]: x[k].map((d, j) => (j === i ? v : d)) } : x));
+  const setRow = (i: number, k: "phase" | "duration" | "detail", v: string) => setP((x) => (x ? { ...x, timeline: x.timeline.map((t, j) => (j === i ? { ...t, [k]: v } : t)) } : x));
 
   const pick = (name: string) => { const t = tiers.find((x) => x.name === name)!; setTier(name); setSetup(t.setup); setMonthly(t.monthly); };
   const make = () => start(async () => {
@@ -50,9 +72,14 @@ export default function ProposalBuilder({ id, client, tiers, initial }: {
       {p && (
         <>
           <div className="flex flex-wrap gap-2 print:hidden">
-            <button type="button" onClick={() => window.print()} className="btn btn-dark">⬇ Save as PDF / print</button>
+            <button type="button" onClick={download} className="btn btn-dark">⬇ Download PDF</button>
             <button type="button" disabled={saving} onClick={() => startSave(async () => { await markProposalSent(id, tier, setup, monthly); setNote("Saved: lead moved to Proposal stage."); })} className="btn btn-line bg-bg">{saving ? "Saving…" : "Mark as sent"}</button>
-            <p className="w-full text-xs text-muted">Click any text below to edit it before printing. In the print dialog choose &quot;Save as PDF&quot;, then attach it to your email.</p>
+            <p className="w-full text-xs text-muted">Click any text below to edit it. Download opens a print window: choose &quot;Save as PDF&quot;.</p>
+            <div className="w-full space-y-2 rounded-xl border border-line bg-bg p-4">
+              <p className="text-sm font-semibold">Email this proposal to {client.email}</p>
+              <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={3} placeholder={`Optional note, e.g. "Great speaking today. Here's what we discussed."`} className="w-full rounded-xl border border-line bg-bg p-3 text-sm" />
+              <button type="button" onClick={send} disabled={sending} className="btn btn-accent w-full sm:w-auto">{sending ? "Sending…" : "✉ Send to client"}</button>
+            </div>
           </div>
 
           <article id="proposal" className="rounded-[20px] bg-bg p-6 text-[15px] leading-relaxed md:p-12 print:rounded-none print:p-0">
@@ -74,12 +101,12 @@ export default function ProposalBuilder({ id, client, tiers, initial }: {
             <p contentEditable suppressContentEditableWarning onBlur={(e) => edit("solution", e.currentTarget.textContent ?? "")} className="mt-2 outline-none">{p.solution}</p>
 
             <h2 className="mt-8 text-sm font-bold uppercase tracking-widest text-accent-strong">What you get</h2>
-            <ul className="mt-2 list-disc space-y-1 pl-5">{p.deliverables.map((d, i) => <li key={i} contentEditable suppressContentEditableWarning className="outline-none">{d}</li>)}</ul>
+            <ul className="mt-2 list-disc space-y-1 pl-5">{p.deliverables.map((d, i) => <li key={i} contentEditable suppressContentEditableWarning onBlur={(e) => setList("deliverables", i, e.currentTarget.textContent ?? "")} className="outline-none">{d}</li>)}</ul>
 
             <h2 className="mt-8 text-sm font-bold uppercase tracking-widest text-accent-strong">Timeline</h2>
             <table className="mt-3 w-full border-collapse text-sm">
               <tbody>{p.timeline.map((t, i) => (
-                <tr key={i} className="border-t border-line align-top"><td className="py-2 pr-4 font-semibold" contentEditable suppressContentEditableWarning>{t.phase}</td><td className="whitespace-nowrap py-2 pr-4 text-muted" contentEditable suppressContentEditableWarning>{t.duration}</td><td className="py-2" contentEditable suppressContentEditableWarning>{t.detail}</td></tr>
+                <tr key={i} className="border-t border-line align-top"><td className="py-2 pr-4 font-semibold" contentEditable suppressContentEditableWarning onBlur={(e) => setRow(i, "phase", e.currentTarget.textContent ?? "")}>{t.phase}</td><td className="whitespace-nowrap py-2 pr-4 text-muted" contentEditable suppressContentEditableWarning onBlur={(e) => setRow(i, "duration", e.currentTarget.textContent ?? "")}>{t.duration}</td><td className="py-2" contentEditable suppressContentEditableWarning onBlur={(e) => setRow(i, "detail", e.currentTarget.textContent ?? "")}>{t.detail}</td></tr>
               ))}</tbody>
             </table>
 
@@ -91,7 +118,7 @@ export default function ProposalBuilder({ id, client, tiers, initial }: {
             <p className="mt-2 text-xs text-muted">Package: {p.packageName}. Prices exclude VAT and third-party subscriptions, which are billed at cost to your own accounts. Valid for 30 days.</p>
 
             <h2 className="mt-8 text-sm font-bold uppercase tracking-widest text-accent-strong">Next steps</h2>
-            <ol className="mt-2 list-decimal space-y-1 pl-5">{p.nextSteps.map((s, i) => <li key={i} contentEditable suppressContentEditableWarning className="outline-none">{s}</li>)}</ol>
+            <ol className="mt-2 list-decimal space-y-1 pl-5">{p.nextSteps.map((s, i) => <li key={i} contentEditable suppressContentEditableWarning onBlur={(e) => setList("nextSteps", i, e.currentTarget.textContent ?? "")} className="outline-none">{s}</li>)}</ol>
 
             <footer className="mt-12 border-t border-line pt-6 text-sm text-muted">Oonava · hello@oonava.com · oonava.com</footer>
           </article>

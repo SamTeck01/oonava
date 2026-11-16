@@ -45,15 +45,13 @@ export async function analyse(lead: Lead): Promise<Analysis> {
   if (!env.geminiKey) return fallback(lead);
   const input = `Name: ${lead.name}\nCompany: ${lead.company ?? ""}\nMessage: ${lead.message ?? ""}\n${lead.context ?? ""}`.slice(0, 6000);
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${env.geminiModel}:generateContent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": env.geminiKey },
+    const res = await geminiFetch({
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: system }] },
         contents: [{ role: "user", parts: [{ text: input }] }],
         generationConfig: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.4 },
       }),
-      signal: AbortSignal.timeout(20000),
+      timeoutMs: 20000,
     });
     if (!res.ok) throw new Error(`Gemini ${res.status}`);
     const data = await res.json();
@@ -70,15 +68,13 @@ export async function analyse(lead: Lead): Promise<Analysis> {
 export async function generateJson<T>(system: string, prompt: string, schema: object, fallback: T): Promise<T & { aiUsed: boolean }> {
   if (!env.geminiKey) return { ...fallback, aiUsed: false };
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${env.geminiModel}:generateContent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": env.geminiKey },
+    const res = await geminiFetch({
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: system }] },
         contents: [{ role: "user", parts: [{ text: prompt.slice(0, 12000) }] }],
         generationConfig: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.6 },
       }),
-      signal: AbortSignal.timeout(45000),
+      timeoutMs: 30000,
     });
     if (!res.ok) throw new Error(`Gemini ${res.status}`);
     const data = await res.json();
@@ -93,9 +89,7 @@ export async function generateJson<T>(system: string, prompt: string, schema: ob
 export async function documentToCsv(base64: string, mimeType: string): Promise<string | null> {
   if (!env.geminiKey) return null;
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${env.geminiModel}:generateContent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": env.geminiKey },
+    const res = await geminiFetch({
       body: JSON.stringify({
         contents: [{ role: "user", parts: [
           { inlineData: { mimeType, data: base64 } },
@@ -103,7 +97,7 @@ export async function documentToCsv(base64: string, mimeType: string): Promise<s
         ] }],
         generationConfig: { temperature: 0 },
       }),
-      signal: AbortSignal.timeout(60000),
+      timeoutMs: 45000,
     });
     if (!res.ok) throw new Error(`Gemini ${res.status}`);
     const data = await res.json();
@@ -113,4 +107,30 @@ export async function documentToCsv(base64: string, mimeType: string): Promise<s
     console.error("[ai:document]", e);
     return null;
   }
+}
+
+// Gemini often returns 503 (overloaded) or times out. Retry, then fall back to a stable model.
+async function geminiFetch({ body, timeoutMs }: { body: string; timeoutMs: number }): Promise<Response> {
+  const models = [...new Set([env.geminiModel, "gemini-2.5-flash"])];
+  let last: Response | null = null;
+  for (const model of models) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": env.geminiKey! },
+          body,
+          signal: AbortSignal.timeout(timeoutMs),
+        });
+        if (res.ok || ![429, 500, 503].includes(res.status)) return res;
+        last = res;
+      } catch (e) {
+        if (!(e instanceof Error && e.name === "TimeoutError")) throw e;
+        break; // slow model: try the next one rather than waiting again
+      }
+      await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
+    }
+  }
+  if (last) return last;
+  throw new Error("Gemini timed out");
 }
