@@ -10,7 +10,7 @@ Oonava is an AI automation and software agency (UK & Europe). This repo holds th
 ## Layout
 - `src/app/` — public site pages; content lives in `src/lib/content.ts`. Prices in € with a £ switch (`components/Money`).
 - `src/app/api/` — `contact` (enquiry pipeline), `cron/follow-up` (day 2/5/10 follow-ups), `webhooks/calendly`, `unsubscribe`.
-- `src/lib/automation/` — `pipeline.ts` (Gemini analysis → Airtable → Resend reply → WhatsApp alert), `airtable.ts`, `email.ts` (branded `layout()`), `whatsapp.ts` (CallMeBot), `env.ts`.
+- `src/lib/automation/` — `pipeline.ts` (AI analysis: Groq first, Gemini fallback; PDF reading is Gemini only → Airtable → Resend reply → WhatsApp alert), `airtable.ts`, `email.ts` (branded `layout()`), `whatsapp.ts` (CallMeBot), `env.ts`.
 - `src/app/admin/` — login/signup/forgot/reset outside the `(app)` group; dashboard pages inside `(app)/` (today, outreach, leads, projects, tasks, clients, invoices, team, team/emails, account, connections).
 - `src/lib/admin/` — `auth.ts` (signed `oonava_admin` cookie), `sbauth.ts` (Supabase Auth REST), `team.ts`, `db.ts` (Supabase → Airtable → in-memory sample), `actions.ts` + `work-actions.ts` (server actions), `notify.ts`, `constants.ts`, `seed.ts` (sample data).
 - `docs/` — `automation.md`, `supabase.sql`, `email-templates/` (Supabase auth emails), handoff PDFs.

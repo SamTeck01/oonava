@@ -2,6 +2,8 @@
 export const env = {
   siteUrl: process.env.SITE_URL ?? "https://oonava.com",
   calendlyUrl: process.env.NEXT_PUBLIC_CALENDLY_URL ?? "",
+  groqKey: process.env.GROQ_API_KEY,
+  groqModel: process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile",
   geminiKey: process.env.GEMINI_API_KEY,
   geminiModel: process.env.GEMINI_MODEL ?? "gemini-3.8-flash",
   resendKey: process.env.RESEND_API_KEY,

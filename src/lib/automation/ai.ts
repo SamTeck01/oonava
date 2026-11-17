@@ -42,20 +42,10 @@ function fallback(lead: Lead): Analysis {
 }
 
 export async function analyse(lead: Lead): Promise<Analysis> {
-  if (!env.geminiKey) return fallback(lead);
+  if (!env.groqKey && !env.geminiKey) return fallback(lead);
   const input = `Name: ${lead.name}\nCompany: ${lead.company ?? ""}\nMessage: ${lead.message ?? ""}\n${lead.context ?? ""}`.slice(0, 6000);
   try {
-    const res = await geminiFetch({
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: system }] },
-        contents: [{ role: "user", parts: [{ text: input }] }],
-        generationConfig: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.4 },
-      }),
-      timeoutMs: 20000,
-    });
-    if (!res.ok) throw new Error(`Gemini ${res.status}`);
-    const data = await res.json();
-    const parsed = JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}") as Analysis;
+    const parsed = JSON.parse(await structured(system, input, schema, 0.4, 20000)) as Analysis;
     if (!parsed.reply || !parsed.score) throw new Error("Incomplete AI response");
     return parsed;
   } catch (e) {
@@ -66,19 +56,9 @@ export async function analyse(lead: Lead): Promise<Analysis> {
 
 // Generic structured generation for the admin dashboard (drafts, proposals).
 export async function generateJson<T>(system: string, prompt: string, schema: object, fallback: T): Promise<T & { aiUsed: boolean }> {
-  if (!env.geminiKey) return { ...fallback, aiUsed: false };
+  if (!env.groqKey && !env.geminiKey) return { ...fallback, aiUsed: false };
   try {
-    const res = await geminiFetch({
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: system }] },
-        contents: [{ role: "user", parts: [{ text: prompt.slice(0, 12000) }] }],
-        generationConfig: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.6 },
-      }),
-      timeoutMs: 30000,
-    });
-    if (!res.ok) throw new Error(`Gemini ${res.status}`);
-    const data = await res.json();
-    return { ...(JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}") as T), aiUsed: true };
+    return { ...(JSON.parse(await structured(system, prompt.slice(0, 12000), schema, 0.6, 30000)) as T), aiUsed: true };
   } catch (e) {
     console.error("[ai:generate]", e);
     return { ...fallback, aiUsed: false };
@@ -133,4 +113,45 @@ async function geminiFetch({ body, timeoutMs }: { body: string; timeoutMs: numbe
   }
   if (last) return last;
   throw new Error("Gemini timed out");
+}
+
+// JSON generation: Groq first (fast, free), Gemini as the fallback. Returns the raw JSON text.
+async function structured(system: string, prompt: string, schema: object, temperature: number, timeoutMs: number): Promise<string> {
+  if (env.groqKey) {
+    try {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.groqKey}` },
+        body: JSON.stringify({
+          model: env.groqModel,
+          temperature,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: `${system}\n\nRespond with a single JSON object matching this JSON schema (Gemini-style types):\n${JSON.stringify(schema)}` },
+            { role: "user", content: prompt },
+          ],
+        }),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (!res.ok) throw new Error(`Groq ${res.status}: ${(await res.text()).slice(0, 200)}`);
+      const data = await res.json();
+      const text: string = data.choices?.[0]?.message?.content ?? "";
+      JSON.parse(text);
+      return text;
+    } catch (e) {
+      console.error("[ai:groq]", e);
+      if (!env.geminiKey) throw e;
+    }
+  }
+  const res = await geminiFetch({
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: system }] },
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: { responseMimeType: "application/json", responseSchema: schema, temperature },
+    }),
+    timeoutMs,
+  });
+  if (!res.ok) throw new Error(`Gemini ${res.status}`);
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
 }
