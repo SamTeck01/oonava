@@ -1,4 +1,5 @@
 import { env } from "./env";
+import { sendTelegram } from "./telegram";
 
 // Team alerts via CallMeBot (free WhatsApp API that can only message individual numbers that opted in).
 // WHATSAPP_ALERTS = "+447700900001:apikey1,+2348012345678:apikey2" sends to each person.
@@ -23,9 +24,10 @@ async function send(phone: string, key: string, text: string) {
   }
 }
 
+// Alerts go to Telegram (main channel) and to any WhatsApp numbers still configured.
 export async function alertTeam(message: string) {
   const to = recipients();
-  if (!to.length) { console.log("[whatsapp] (not configured)\n" + message); return false; }
-  const results = await Promise.all(to.map((r) => send(r.phone, r.key, message)));
-  return results.some(Boolean);
+  const [tg, ...wa] = await Promise.all([sendTelegram(message), ...to.map((r) => send(r.phone, r.key, message))]);
+  if (!tg && !to.length) console.log("[alerts] (no Telegram or WhatsApp configured)\n" + message);
+  return tg || wa.some(Boolean);
 }

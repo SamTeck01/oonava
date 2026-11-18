@@ -35,7 +35,7 @@ export default async function Connections() {
             <div className="mt-4 flex flex-wrap gap-2">
               {!c.connected && <a href={c.connectUrl} target="_blank" rel="noreferrer" className="btn btn-dark min-h-10">Connect: {c.connectLabel} ↗</a>}
               <a href="https://vercel.com/dashboard" target="_blank" rel="noreferrer" className="btn btn-line min-h-10">Vercel settings ↗</a>
-              {c.testable && c.connected && <ConnectionTest id={c.id as "airtable" | "resend"} />}
+              {c.testable && (c.connected || c.id === "telegram") && <ConnectionTest id={c.id as "airtable" | "resend" | "telegram"} />}
             </div>
           </section>
         ))}

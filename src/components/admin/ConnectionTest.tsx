@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { testConnection } from "@/lib/admin/work-actions";
 
-export default function ConnectionTest({ id }: { id: "airtable" | "resend" }) {
+export default function ConnectionTest({ id }: { id: "airtable" | "resend" | "telegram" }) {
   const [res, setRes] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   return (

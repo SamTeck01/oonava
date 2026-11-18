@@ -37,7 +37,7 @@ Oonava is an AI automation and software agency (UK & Europe). This repo holds th
 Done: site, enquiry automation, dashboard, Supabase auth, branded emails, Airtable connected (env vars set, redeployed).
 Open:
 - End-to-end test of a live enquiry (form → Airtable → reply email → dashboard Leads).
-- WhatsApp alerts: CallMeBot is full; `WHATSAPP_ALERTS` not set. Proposed alternative: Telegram bot alerts (not built yet).
+- Team alerts: Telegram bot (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_IDS`, see `automation/telegram.ts`); WhatsApp via CallMeBot still supported but unused.
 - Calendly webhook → `https://oonava.com/api/webhooks/calendly`; confirm the follow-up cron in `vercel.json` runs.
 - Hostinger forwarders for work emails so Supabase reset emails arrive.
 - Delight and Kelly to sign up and be approved.

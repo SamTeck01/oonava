@@ -12,6 +12,8 @@ export const env = {
   airtableToken: process.env.AIRTABLE_TOKEN,
   airtableBase: process.env.AIRTABLE_BASE_ID,
   airtableTable: process.env.AIRTABLE_TABLE ?? "Leads",
+  telegramToken: process.env.TELEGRAM_BOT_TOKEN,
+  telegramChats: process.env.TELEGRAM_CHAT_IDS,
   whatsappAlerts: process.env.WHATSAPP_ALERTS,
   whatsappPhone: process.env.WHATSAPP_ALERT_PHONE,
   whatsappKey: process.env.CALLMEBOT_API_KEY,

@@ -198,9 +198,21 @@ export async function changeMyPassword(_: unknown, form: FormData) {
 
 /* ---------- Connections (admin) ---------- */
 
-export async function testConnection(id: "airtable" | "resend"): Promise<{ ok: boolean; text: string }> {
+export async function testConnection(id: "airtable" | "resend" | "telegram"): Promise<{ ok: boolean; text: string }> {
   const u = await assertPerm("admin");
   const { env } = await import("@/lib/automation/env");
+  if (id === "telegram") {
+    if (!env.telegramToken) return { ok: false, text: "Add TELEGRAM_BOT_TOKEN in Vercel and redeploy first." };
+    const { sendTelegram, telegramChats, recentTelegramChats } = await import("@/lib/automation/telegram");
+    if (!telegramChats().length) {
+      const found = await recentTelegramChats();
+      return found.length
+        ? { ok: true, text: `Found: ${found.map((c) => `${c.name || "chat"} → ${c.id}`).join(" · ")}. Add the id(s) in Vercel as TELEGRAM_CHAT_IDS (comma-separated) and redeploy.` }
+        : { ok: false, text: "Bot works, but no chats yet. Add the bot to your team group (or message it directly), send any message, then press Test again." };
+    }
+    const ok = await sendTelegram(`✅ Oonava test alert from ${u.name}. Telegram alerts are working.`);
+    return ok ? { ok: true, text: "Test alert sent. Check Telegram." } : { ok: false, text: "Sending failed. Check the chat ids, and that the bot is still in the group." };
+  }
   if (id === "airtable") {
     const res = await fetch(`https://api.airtable.com/v0/${env.airtableBase}/${encodeURIComponent(env.airtableTable)}?pageSize=1`, { headers: { Authorization: `Bearer ${env.airtableToken}` }, cache: "no-store", signal: AbortSignal.timeout(15000) }).catch(() => null);
     if (!res) return { ok: false, text: "Couldn't reach Airtable." };
