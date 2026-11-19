@@ -43,7 +43,7 @@ export default async function EmailSetup() {
         <div className="divide-y divide-line">
           {TEMPLATES.map((t, i) => (
             <div key={t.file} className="flex flex-wrap items-center gap-3 py-4">
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 basis-full sm:basis-0 sm:flex-1">
                 <p className="font-semibold">{t.name}</p>
                 <p className="text-sm text-muted">Subject: {t.subject}</p>
                 <p className="text-xs text-muted">{t.file}</p>

@@ -69,8 +69,8 @@ export default async function Today({ searchParams }: { searchParams: Promise<{ 
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr] [&>*]:min-w-0">
+        <div className="min-w-0 space-y-6">
           <Panel title={`My tasks (${myTasks.length})`} action={<Link href="/admin/tasks" className="text-sm text-accent-strong">All tasks →</Link>}>
             <TaskList tasks={myTasks.slice(0, 10)} empty="No open tasks. Nice." />
           </Panel>

@@ -31,7 +31,7 @@ export default async function Connections() {
             {!c.connected && (
               <ol className="mt-4 list-decimal space-y-1 pl-5 text-sm">{c.steps.map((s) => <li key={s}>{s}</li>)}</ol>
             )}
-            <p className="mt-3 text-xs text-muted">Vercel variables: {c.vars.map((v) => <code key={v} className="mr-1 rounded bg-surface px-1.5 py-0.5">{v}</code>)}</p>
+            <p className="mt-3 text-xs text-muted">Vercel variables: {c.vars.map((v) => <code key={v} className="mr-1 inline-block break-all rounded bg-surface px-1.5 py-0.5">{v}</code>)}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               {!c.connected && <a href={c.connectUrl} target="_blank" rel="noreferrer" className="btn btn-dark min-h-10">Connect: {c.connectLabel} ↗</a>}
               <a href="https://vercel.com/dashboard" target="_blank" rel="noreferrer" className="btn btn-line min-h-10">Vercel settings ↗</a>
