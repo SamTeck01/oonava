@@ -92,3 +92,33 @@ Strong base. The brand is consistent: black/white, electric blue, Urbanist-style
 - **V4** (one booking, six jobs).
 
 These are the clearest and most "scroll-stopping" once the global fixes are done.
+
+---
+
+# Hook shorts review (Hook 1–8, both formats, 12–15s each)
+
+## Overall verdict
+The hook lines are strong. They're the best copy in the whole set. The structure is right too: hook → one system clip → end card. But the shorts don't yet *deliver* the hook fast enough, and they repeat the same finishing problems as the main videos.
+
+## Global fixes for all 8 hook shorts
+1. **Show the whole hook line by 0.5s, and on frame 0.** At the moment the line types in word by word, so the first frame (the thumbnail and the moment people decide to swipe) shows a single word: "Your", "Still", "The", "We", "One", "If your", "Day 2." Put the full hook on screen at frame 0, then animate the emphasis word (the blue script word) a beat later.
+2. **Make the hook text much bigger and centred.** On 9:16 it's small, left-aligned, and the first word sits against the left edge. Centre it, set it at about 90–110px on 1080×1920, at most 3 lines, inside the safe area.
+3. **No blur on text.** Hook 3's "The best salesperson never sleeps" blurs and clips mid-animation ("salesperson neve"). Use slide-up and fade only.
+4. **End card at most 2.5s on shorts.** It's currently about 4–5s of a 13s video, roughly a third. On shorts, end card time is where people swipe away. Better still, end on the payoff frame with a small "oonava.com" tag and loop back to the hook.
+5. **Remove the mouse cursor** (visible on the end card of nearly every short).
+6. **Fix the black vertical seam lines** that appear on white frames (thin dark lines near the edges during and after transitions). They look like rendering seams between layers.
+7. **Scale the middle UI clip up about 40% on 9:16.** The mockups fill only about a third of the phone screen, and the text inside them is unreadable on a phone.
+8. **The visual must prove the hook.** When the clip doesn't match the line, the hook feels like clickbait (see Hook 2 and Hook 8).
+
+## Per-short notes
+- **Hook 1: "Your leads are going cold, while you read this."** Great line. The matching lead card (Sarah Mitchell, HOT 92, reply sent) is right. Add a visible ticking timer or "sent in 38s" to tie it to *speed*.
+- **Hook 2: "Still copying data between apps? Stop."** Strong line, but the visual is the generic Integrate/Build diagram reused from V1. Show actual copy-pasting first (a cursor copying a row from a spreadsheet into a CRM, again and again), then the automated sync replacing it.
+- **Hook 3: "The best salesperson never sleeps. It's a system."** The text blur and clipping need fixing. The follow-up board works, but show a timestamp like "03:12 · Follow-up sent" so "never sleeps" is visible.
+- **Hook 4: "We replied to this lead before you finished your coffee."** One of the best. Add a coffee cup or a small timer for the visual joke, and keep the "Viewing booked · CRM updated · Agent notified" chips; they're a great payoff.
+- **Hook 5: "Your CRM is lying to you. Nobody updated it."** Good line. The workflow clip shows the fix, but not the *lie*. Open on a CRM record that's out of date ("Last updated: 14 days ago", wrong stage), then show it updating itself.
+- **Hook 6: "Day 2. Day 5. Day 10. That's where the deals are."** The cleanest short. The pacing works. Make the D2/D5/D10 sequence bigger and hold the "Replied" moment longer.
+- **Hook 7: "One booking. Six jobs. Zero clicks."** Strong. "Zero clicks" + "Completed · 1.8s" is a perfect match. Just fix the global issues.
+- **Hook 8: "If your business needs you to run, it isn't a system yet."** The best line, but the weakest visual: the dashboard clip is very short and generic. Show the owner's phone buzzing non-stop, then switch to the calm dashboard running by itself. Give it 1–2s more before the end card.
+
+## Post these hook shorts first (once fixed)
+**Hook 4 (coffee), Hook 7 (zero clicks), Hook 6 (Day 2/5/10), Hook 1 (going cold).**
