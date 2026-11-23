@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
     await fetch(`${process.env.SUPABASE_URL}/rest/v1/team_users?select=id&limit=1`, { headers: { apikey: key, Authorization: `Bearer ${key}` } }).catch(() => {});
   }
-  const leads = await findLeads(`AND({Status}='Contacted', {Follow-ups Sent} < ${sequence.length})`);
+  const leads = await findLeads(`AND({Status}='Contacted', {Follow-ups Sent} < ${sequence.length}, OR({Outreach Step}=BLANK(), {Outreach Step}=0))`);
   let sent = 0;
   for (const { id, fields } of leads) {
     const n = fields["Follow-ups Sent"] ?? 0;
@@ -30,7 +30,8 @@ export async function GET(req: Request) {
     const mail = layout({ name: fields.Name, body: step.body, cta, unsubscribeUrl: unsubscribeUrl(id) });
     // Claim the step before sending so a retried run can't email twice.
     if (!(await updateLead(id, { "Follow-ups Sent": n + 1, "Last Contacted": new Date().toISOString() }))) continue;
-    if (await sendEmail({ to: fields.Email, subject: step.subject, ...mail })) sent++;
+    // Plain text only: one-to-one sales emails with HTML/images tend to land in Gmail's Promotions tab.
+    if (await sendEmail({ to: fields.Email, subject: step.subject, text: mail.text })) sent++;
   }
   return NextResponse.json({ checked: leads.length, sent });
 }

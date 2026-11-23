@@ -25,9 +25,14 @@ export type LeadRecord = {
   "Next Action"?: string;
   Created?: string;
   "Assigned To"?: string;
+  "Outreach Step"?: number;
+  "Next Send"?: string | null;
+  "Message ID"?: string;
+  "Email Subject"?: string;
+  Website?: string;
 };
 
-export const STATUSES = ["New", "Contacted", "Replied", "Booked", "Proposal", "Won", "Lost", "Unsubscribed"] as const;
+export const STATUSES = ["New", "Contacted", "Replied", "Booked", "Proposal", "Won", "Lost", "Unsubscribed", "Bounced", "No response"] as const;
 export type LeadStatus = (typeof STATUSES)[number];
 
 export const airtableEnabled = () => Boolean(env.airtableToken && env.airtableBase);

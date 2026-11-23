@@ -23,7 +23,8 @@ export async function handleEnquiry(lead: Lead, source: string) {
     const cta = env.calendlyUrl ? { label: "Book your free mapping call", url: env.calendlyUrl } : undefined;
     const body = a.reply + (cta ? "" : "\n\nJust reply to this email with a couple of times that suit you and we'll send an invite.");
     const mail = layout({ name: lead.name, body, cta, unsubscribeUrl: id ? unsubscribeUrl(id) : undefined });
-    replied = await sendEmail({ to: lead.email, subject: "Thanks for contacting Oonava", ...mail });
+    // Plain text keeps the reply in the Primary tab rather than Promotions.
+    replied = await sendEmail({ to: lead.email, subject: "Thanks for contacting Oonava", text: mail.text });
     if (id && replied) {
       const now = new Date().toISOString();
       await updateLead(id, { Status: "Contacted", "Reply Sent": mail.text, "First Contacted": now, "Last Contacted": now });

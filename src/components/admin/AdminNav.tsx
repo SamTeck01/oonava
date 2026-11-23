@@ -30,6 +30,7 @@ const ALL: { href: string; label: string; icon: keyof typeof ICON; perms: Perm[]
   { href: "/admin/clients", label: "Clients", icon: "clients", perms: ["sales", "finance"] },
   { href: "/admin/invoices", label: "Invoices", icon: "invoices", perms: ["finance"] },
   { href: "/admin/team", label: "Team", icon: "team", perms: ["admin"] },
+  { href: "/admin/automation", label: "Automation", icon: "link", perms: ["admin"] },
   { href: "/admin/connections", label: "Connections", icon: "link", perms: ["admin"] },
   { href: "/admin/account", label: "My account", icon: "account", perms: null },
 ];

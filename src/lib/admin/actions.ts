@@ -3,6 +3,7 @@
 import type { Proposal } from "@/lib/admin/ai";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { authenticate, startSession, endSession, currentUser, demoLoginAllowed, type SessionUser } from "./auth";
 import { can, users, findUserByEmail, bootstrapAdmins, hashPassword, type Permission } from "./team";
@@ -144,7 +145,7 @@ export async function sendLeadEmail(id: string, subject: string, body: string, w
   if (l.status === "Unsubscribed") return { ok: false, error: "This person unsubscribed. Don't email them." };
   const cta = withBooking && env.calendlyUrl ? { label: "Book a free mapping call", url: env.calendlyUrl } : undefined;
   const mail = layout({ name: l.name, body: body.slice(0, 8000), cta, unsubscribeUrl: l.id.startsWith("demo_") ? undefined : unsubscribeUrl(l.id), signature: { name: u.name.split(" ")[0], title: u.title || "Oonava" } });
-  const ok = l.id.startsWith("demo_") ? true : await sendEmail({ to: l.email, subject: subject.slice(0, 200), ...mail });
+  const ok = l.id.startsWith("demo_") ? true : await sendEmail({ to: l.email, subject: subject.slice(0, 200), text: mail.text }); // plain text: lands in Primary, not Promotions
   if (!ok) return { ok: false, error: "Email failed to send. Check RESEND_API_KEY and the domain in Resend." };
   const now = new Date().toISOString();
   await updateLead(id, { lastContacted: now, firstContacted: l.firstContacted || now, status: l.status === "New" ? "Contacted" : l.status });
@@ -218,6 +219,7 @@ export async function newLead(form: FormData) {
   });
   if (!id) return { error: "Could not save the lead. Check the Airtable connection and field names." };
   await track(u, "added lead", name, `/admin/leads/${id}`);
+  kickOutreach();
   refresh();
   redirect(`/admin/leads/${id}`);
 }
@@ -243,15 +245,18 @@ export async function importCsv(csv: string, source: string, assignTo = "") {
   const c = { name: col(["name", "contact"]), email: col(["email", "e-mail"]), company: col(["company", "agency", "business"]), phone: col(["phone", "mobile", "tel"]), industry: col(["industry", "sector"]), website: col(["website", "url", "site"]), notes: col(["notes", "note", "comment"]), city: col(["city", "location", "country"]) };
   if (c.email < 0) return { added: 0, skipped: 0, error: "Couldn't find an email column." };
   let added = 0, skipped = 0;
+  const { listLeads } = await import("@/lib/automation/airtable");
+  const existing = new Set((await listLeads()).map((r) => (r.fields.Email ?? "").toLowerCase()));
   for (const r of rows.slice(1, 501)) {
     const get = (i: number) => (i >= 0 ? (r[i] ?? "").trim() : "");
     const email = get(c.email);
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { skipped++; continue; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || existing.has(email.toLowerCase())) { skipped++; continue; }
+    existing.add(email.toLowerCase());
     const notes = [get(c.notes), get(c.website) && `Website: ${get(c.website)}`, get(c.city) && `Location: ${get(c.city)}`].filter(Boolean).join("\n");
     const id = await createLead({ name: get(c.name) || get(c.company) || email, email, company: get(c.company), phone: get(c.phone), industry: get(c.industry), notes, source: source || "Import", status: "New", assignedTo: assignTo });
     if (id) added++; else skipped++;
   }
-  if (added) await track(u, `imported ${added} leads from`, source || "CSV", "/admin/leads");
+  if (added) { await track(u, `imported ${added} leads from`, source || "CSV", "/admin/leads"); kickOutreach(); }
   refresh();
   return { added, skipped };
 }
@@ -333,4 +338,12 @@ export async function completePasswordReset(input: { tokenHash?: string; accessT
   const profile = (await allUsers()).find((u) => u.id === id);
   if (profile) await notify(profile, "Your password was changed", "Your Oonava dashboard password was just changed. If this wasn't you, tell an admin straight away.");
   return { ok: "Password updated. You can sign in now." };
+}
+
+// New leads get their first email straight away (within sending hours and today's limits).
+function kickOutreach() {
+  after(async () => {
+    const { runOutreach } = await import("@/lib/automation/outreach");
+    await runOutreach().catch((e) => console.error("[outreach] kick", e));
+  });
 }

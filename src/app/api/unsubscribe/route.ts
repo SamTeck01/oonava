@@ -8,6 +8,15 @@ export async function GET(req: Request) {
   const id = u.searchParams.get("id") ?? "";
   const t = u.searchParams.get("t") ?? "";
   if (!id || !verify(id, t)) return page("This link is invalid or has expired.");
-  await updateLead(id, { Status: "Unsubscribed" });
+  await updateLead(id, { Status: "Unsubscribed", "Next Send": null });
   return page("You've been unsubscribed. You won't receive any more follow-ups from us.");
+}
+
+// One-click unsubscribe (RFC 8058) from Gmail/Outlook's built-in "Unsubscribe" button.
+export async function POST(req: Request) {
+  const u = new URL(req.url);
+  const id = u.searchParams.get("id") ?? "";
+  if (!id || !verify(id, u.searchParams.get("t") ?? "")) return new Response("Invalid", { status: 400 });
+  await updateLead(id, { Status: "Unsubscribed", "Next Send": null });
+  return new Response("OK");
 }

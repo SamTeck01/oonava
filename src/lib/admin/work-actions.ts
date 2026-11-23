@@ -237,3 +237,25 @@ export async function updateMyProfile(_: unknown, form: FormData) {
   done("/admin/account");
   return { ok: "Saved. Notifications will go to " + personal + "." };
 }
+
+// Automation page buttons (admins only).
+export async function runAutomation(kind: "outreach" | "sourcing" | "inbox" | "mailbox"): Promise<{ ok: boolean; text: string }> {
+  await assertPerm("admin");
+  try {
+    if (kind === "mailbox") return (await import("@/lib/automation/mailbox")).verifyMailbox();
+    if (kind === "inbox") {
+      const r = await (await import("@/lib/automation/outreach")).processInbox();
+      return { ok: true, text: `Inbox checked: ${r.replies} new replies, ${r.bounces} bounces, ${r.unsubscribes} unsubscribes.` };
+    }
+    if (kind === "sourcing") {
+      const r = await (await import("@/lib/automation/sourcing")).runSourcing();
+      revalidatePath("/admin/automation");
+      return { ok: r.added > 0, text: r.log.join(" ") };
+    }
+    const r = await (await import("@/lib/automation/outreach")).runOutreach();
+    revalidatePath("/admin/automation");
+    return { ok: r.sent > 0, text: r.log.join(" ") };
+  } catch (e) {
+    return { ok: false, text: `Failed: ${(e as Error).message}` };
+  }
+}

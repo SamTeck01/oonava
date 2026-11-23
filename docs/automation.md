@@ -108,3 +108,14 @@ Supabase (required for logins). Run `docs/supabase.sql` in the Supabase SQL edit
 1. Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and `ADMIN_EMAILS=samad@oonava.com` in Vercel and redeploy.
 2. Go to oonava.com/admin/signup and sign up with that email. You're approved as Admin automatically.
 3. Kelly and Delight sign up; approve them as Admin on the Team page. Others sign up and get only the roles they need.
+
+## Sales machine (auto-sourcing + auto-outreach)
+
+Admin page: `/admin/automation`. Code: `src/lib/automation/{sourcing,outreach,mailbox,deliverability}.ts`, run by `/api/cron/automation`.
+
+1. **Sourcing** (`runSourcing`): up to `SOURCING_DAILY_LIMIT` new leads a day from Apollo (`APOLLO_API_KEY`, `APOLLO_TITLES`, `APOLLO_LOCATIONS`, `APOLLO_KEYWORDS`) and Google Maps (`GOOGLE_PLACES_KEY`, `SOURCING_QUERIES` separated by `;`). Dedupes by email and company domain. Leads are created as `New`.
+2. **Outreach** (`runOutreach`): every non-website lead with status `New` gets an AI-written plain-text email from `hello@oonava.com` over Hostinger SMTP (`MAIL_PASSWORD`), then 3 follow-ups 3/4/4 days apart, threaded. Mon–Fri 08:00–17:30 UK. Warm-up cap: 10/day + 5/day from `OUTREACH_START` up to `OUTREACH_DAILY_CAP`. Off unless `OUTREACH_ENABLED=true`.
+3. **Inbox** (`processInbox`): IMAP reads replies → `Replied` + Telegram alert; "no thanks/unsubscribe" → `Unsubscribed`; bounces → `Bounced`; out-of-office ignored.
+4. **Health**: SPF/DKIM/DMARC/MX/blocklist checks and 14-day bounce/unsubscribe/reply rates. Auto-pauses at >5% bounces or >3% unsubscribes.
+
+Schedule: Vercel cron weekdays 07:00 UTC (`?report=1` posts the daily Telegram report). Add an external pinger (cron-job.org) every 20 minutes calling `https://oonava.com/api/cron/automation` with header `Authorization: Bearer <CRON_SECRET>` so sending is spread through the day.
