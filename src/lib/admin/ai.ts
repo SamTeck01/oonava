@@ -84,6 +84,7 @@ export async function draftProposal(lead: Lead, tierName: string, setup: number,
       required: ["title", "summary", "challenge", "solution", "deliverables", "timeline", "nextSteps"],
     },
     fallback,
+    true, // proposals use the stronger model
   );
   // Prices always come from the team, never from the model.
   return { ...fallback, ...r, packageName: t.name, setup, monthly };

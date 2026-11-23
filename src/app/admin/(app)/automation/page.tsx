@@ -22,6 +22,7 @@ export default async function Automation() {
     deliverabilityChecks().catch(() => []),
   ]);
   const sources = [
+    { name: "Signal hunter (Claude web research)", on: !!env.anthropicKey, detail: `Daily: up to ${env.hunterDailyLimit} businesses with a real buying signal (bad reviews about slow replies, hiring admin staff, new branches), score ${env.hunterMinScore}+/10 only, proof attached. Areas: ${env.hunterAreas}`, vars: "ANTHROPIC_API_KEY (optional: HUNTER_AREAS, HUNTER_DAILY_LIMIT)" },
     { name: "Apollo (decision-makers)", on: !!env.apolloKey, detail: `${env.apolloTitles} · ${env.apolloLocations} · ${env.apolloKeywords}`, vars: "APOLLO_API_KEY, APOLLO_TITLES, APOLLO_LOCATIONS, APOLLO_KEYWORDS" },
     { name: "Google Maps (local businesses)", on: !!env.placesKey && !!env.sourcingQueries, detail: env.sourcingQueries || "No searches set", vars: "GOOGLE_PLACES_KEY, SOURCING_QUERIES (e.g. estate agents in Manchester; letting agents in Leeds)" },
   ];
@@ -49,7 +50,7 @@ export default async function Automation() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 [&>*]:min-w-0">
         <Panel title="How it runs">
           <ol className="list-decimal space-y-2 pl-5 text-sm">
-            <li><b>Find leads:</b> up to {env.sourcingDailyLimit} new prospects a day from the sources below, skipping anyone already in the pipeline.</li>
+            <li><b>Find leads:</b> each morning Claude hunts the web for businesses with a real buying signal (quality), and Apollo/Google Maps add up to {env.sourcingDailyLimit} more (volume). Anyone already in the pipeline is skipped.</li>
             <li><b>First email:</b> any new lead (found, imported or added by hand) gets a short, personal AI-written email from hello@oonava.com, in plain text with no links or images so it lands in the inbox, not Promotions.</li>
             <li><b>Follow-ups:</b> {MAX_STEPS - 1} more, {STEP_GAPS_DAYS.join(", ")} days apart, threaded as replies. Then the lead is marked &quot;No response&quot;.</li>
             <li><b>Replies:</b> the inbox is read every run. A reply stops the sequence, marks the lead Replied and alerts the team on Telegram. &quot;No thanks&quot; or &quot;unsubscribe&quot; replies are removed automatically. Bounces are marked and never emailed again.</li>
@@ -57,6 +58,7 @@ export default async function Automation() {
           </ol>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <AutomationButton kind="outreach" label="Send now" />
+            <AutomationButton kind="hunter" label="Hunt quality leads now" />
             <AutomationButton kind="sourcing" label="Find new leads now" />
             <AutomationButton kind="inbox" label="Check replies now" />
             <AutomationButton kind="mailbox" label="Test mailbox login" />

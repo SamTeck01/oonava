@@ -61,7 +61,7 @@ const schema = { type: "OBJECT", properties: { subject: { type: "STRING" }, body
 
 const FIRST_SYSTEM = `You write short, personal B2B cold emails for Oonava, a UK AI automation and software agency (lead response, follow-up automation, connecting business tools, custom systems).
 Rules: 60–110 words. Plain text, no links, no bullet points, no emojis, no exclamation marks, no hype or salesy words (free, guarantee, amazing, limited time).
-Open with something specific about their business or role. Name one concrete, likely pain (slow replies to enquiries, manual follow-ups, copying data between tools). One sentence on how we fix it.
+Open with something specific about their business or role. If the notes contain a "Signal:" or "Opening line idea:", open with that exact observation in natural words (it's the reason we're writing). Name one concrete, likely pain (slow replies to enquiries, manual follow-ups, copying data between tools). One sentence on how we fix it.
 End with a soft yes/no question (e.g. "Worth a quick chat?"). Do not include a greeting line or sign-off; they are added for you.
 Subject: 2–5 words, lowercase except names, looks like a normal email between people (e.g. "enquiries at {company}"). Return JSON {subject, body}.`;
 

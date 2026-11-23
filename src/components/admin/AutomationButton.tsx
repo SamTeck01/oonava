@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { runAutomation } from "@/lib/admin/work-actions";
 
-export default function AutomationButton({ kind, label }: { kind: "outreach" | "sourcing" | "inbox" | "mailbox"; label: string }) {
+export default function AutomationButton({ kind, label }: { kind: "outreach" | "sourcing" | "inbox" | "mailbox" | "hunter"; label: string }) {
   const [res, setRes] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, start] = useTransition();
   return (

@@ -1,4 +1,5 @@
 import { env } from "./env";
+import { claudeEnabled, claudeJson, claudeDocument } from "./claude";
 
 export type Lead = { name: string; email: string; company?: string; phone?: string; message?: string; context?: string };
 
@@ -42,7 +43,7 @@ function fallback(lead: Lead): Analysis {
 }
 
 export async function analyse(lead: Lead): Promise<Analysis> {
-  if (!env.groqKey && !env.geminiKey) return fallback(lead);
+  if (!claudeEnabled() && !env.groqKey && !env.geminiKey) return fallback(lead);
   const input = `Name: ${lead.name}\nCompany: ${lead.company ?? ""}\nMessage: ${lead.message ?? ""}\n${lead.context ?? ""}`.slice(0, 6000);
   try {
     const parsed = JSON.parse(await structured(system, input, schema, 0.4, 20000)) as Analysis;
@@ -55,10 +56,10 @@ export async function analyse(lead: Lead): Promise<Analysis> {
 }
 
 // Generic structured generation for the admin dashboard (drafts, proposals).
-export async function generateJson<T>(system: string, prompt: string, schema: object, fallback: T): Promise<T & { aiUsed: boolean }> {
-  if (!env.groqKey && !env.geminiKey) return { ...fallback, aiUsed: false };
+export async function generateJson<T>(system: string, prompt: string, schema: object, fallback: T, smart = false): Promise<T & { aiUsed: boolean }> {
+  if (!claudeEnabled() && !env.groqKey && !env.geminiKey) return { ...fallback, aiUsed: false };
   try {
-    return { ...(JSON.parse(await structured(system, prompt.slice(0, 12000), schema, 0.6, 30000)) as T), aiUsed: true };
+    return { ...(JSON.parse(await structured(system, prompt.slice(0, 12000), schema, 0.6, 30000, smart)) as T), aiUsed: true };
   } catch (e) {
     console.error("[ai:generate]", e);
     return { ...fallback, aiUsed: false };
@@ -67,6 +68,15 @@ export async function generateJson<T>(system: string, prompt: string, schema: ob
 
 // Reads a lead list from a PDF (or other document) and returns it as CSV text.
 export async function documentToCsv(base64: string, mimeType: string): Promise<string | null> {
+  const instruction = "Extract every person or business contact in this document. Output ONLY CSV, no code fences, with this header row: name,email,company,phone,industry,website,city,notes. Quote fields containing commas. Leave unknown fields empty. Never invent emails.";
+  if (claudeEnabled() && /pdf/i.test(mimeType)) {
+    try {
+      const out = (await claudeDocument(base64, instruction)).replace(/^```[a-z]*\n?|```\s*$/gim, "").trim();
+      if (out) return out;
+    } catch (e) {
+      console.error("[ai:claude-document]", e);
+    }
+  }
   if (!env.geminiKey) return null;
   try {
     const res = await geminiFetch({
@@ -115,8 +125,18 @@ async function geminiFetch({ body, timeoutMs }: { body: string; timeoutMs: numbe
   throw new Error("Gemini timed out");
 }
 
-// JSON generation: Groq first (fast, free), Gemini as the fallback. Returns the raw JSON text.
-async function structured(system: string, prompt: string, schema: object, temperature: number, timeoutMs: number): Promise<string> {
+// JSON generation: Claude first, then Groq (free, fast), then Gemini. Returns the raw JSON text.
+async function structured(system: string, prompt: string, schema: object, temperature: number, timeoutMs: number, smart = false): Promise<string> {
+  if (claudeEnabled()) {
+    try {
+      const text = await claudeJson(system, prompt, schema, { smart, timeoutMs: smart ? 90_000 : timeoutMs });
+      JSON.parse(text);
+      return text;
+    } catch (e) {
+      console.error("[ai:claude]", e);
+      if (!env.groqKey && !env.geminiKey) throw e;
+    }
+  }
   if (env.groqKey) {
     try {
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {

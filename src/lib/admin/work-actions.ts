@@ -239,13 +239,18 @@ export async function updateMyProfile(_: unknown, form: FormData) {
 }
 
 // Automation page buttons (admins only).
-export async function runAutomation(kind: "outreach" | "sourcing" | "inbox" | "mailbox"): Promise<{ ok: boolean; text: string }> {
+export async function runAutomation(kind: "outreach" | "sourcing" | "inbox" | "mailbox" | "hunter"): Promise<{ ok: boolean; text: string }> {
   await assertPerm("admin");
   try {
     if (kind === "mailbox") return (await import("@/lib/automation/mailbox")).verifyMailbox();
     if (kind === "inbox") {
       const r = await (await import("@/lib/automation/outreach")).processInbox();
       return { ok: true, text: `Inbox checked: ${r.replies} new replies, ${r.bounces} bounces, ${r.unsubscribes} unsubscribes.` };
+    }
+    if (kind === "hunter") {
+      const r = await (await import("@/lib/automation/hunter")).runHunter();
+      revalidatePath("/admin/automation");
+      return { ok: r.added > 0, text: r.log.join(" ") };
     }
     if (kind === "sourcing") {
       const r = await (await import("@/lib/automation/sourcing")).runSourcing();

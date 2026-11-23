@@ -119,3 +119,9 @@ Admin page: `/admin/automation`. Code: `src/lib/automation/{sourcing,outreach,ma
 4. **Health**: SPF/DKIM/DMARC/MX/blocklist checks and 14-day bounce/unsubscribe/reply rates. Auto-pauses at >5% bounces or >3% unsubscribes.
 
 Schedule: Vercel cron weekdays 07:00 UTC (`?report=1` posts the daily Telegram report). Add an external pinger (cron-job.org) every 20 minutes calling `https://oonava.com/api/cron/automation` with header `Authorization: Bearer <CRON_SECRET>` so sending is spread through the day.
+
+### AI provider
+Claude is the main AI (`src/lib/automation/claude.ts`, key `ANTHROPIC_API_KEY`): `claude-haiku-5-5` for scoring, emails and replies; `claude-sonnet-5-5` for proposals, PDF reading and the signal hunter (web search). Override with `ANTHROPIC_FAST_MODEL` / `ANTHROPIC_SMART_MODEL`. If Claude fails or declines, requests fall back to Groq, then Gemini.
+
+### Signal hunter
+`runHunter()` runs on the daily cron (`?report=1`) or the "Hunt quality leads now" button. Claude searches the web for one rotating buying signal in one rotating area (`HUNTER_AREAS`), keeps leads scoring `HUNTER_MIN_SCORE`+ (default 7), up to `HUNTER_DAILY_LIMIT` (default 8), with the proof link in Notes. Source = "Signal Hunter"; the first outreach email opens with the found signal.
